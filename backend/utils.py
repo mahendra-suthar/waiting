@@ -45,7 +45,7 @@ def generate_and_store_otp_secret(phone_number):
 
     print(f"Generated OTP: {otp_code}")
     try:
-        redis_client.setex(phone_number, 30, otp_secret)
+        redis_client.set(phone_number, 30, otp_secret)
     except Exception as e:
         log.error(f"Error while store OTP: {e}")
         return False

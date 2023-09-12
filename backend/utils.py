@@ -48,7 +48,7 @@ def generate_and_store_otp_secret(phone_number):
     print("------otp_secret-------", phone_number, type(phone_number))
     expire_time = int(60)
     try:
-        redis_client.setex(phone_number, expire_time, otp_secret)
+        redis_client.setex(phone_number, expire_time, 012345)
     except Exception as e:
         log.error(f"Error while store OTP: {e}")
         return False

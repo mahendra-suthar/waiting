@@ -48,12 +48,11 @@ def verify_phone_otp_and_login(user):
                     log.error(f"Error while register user: {error}")
                     raise HTTPException(status_code=500, detail="Error while register user")
             else:
-                print("-----user_obj-else--------", user_obj)
                 user_id = user_obj['_id']
-            print("-----user_obj---------", user_obj)
+            print("-----user_id---------", user_id)
             if verify_otp(phone_number, otp):
                 token = create_jwt_token(user_id)
-                user_obj['_id'] = str(user_obj['_id'])
+                user_obj['_id'] = str(user_id)
                 return_data = {
                     'token': token,
                     'user': jsonable_encoder(user_obj)

@@ -34,26 +34,14 @@ def generate_and_store_otp_secret(phone_number):
     """
     Generate OTP using pyotp and store OTP into redis database
     """
-    expire_time = int(60)
-    otp = str(123456)
-    redis_client.set(phone_number, otp)
     
-    # Step 1: Generate a random 16-character base32 secret (usually stored securely per user)
     otp_secret = pyotp.random_base32()
-
-    # Step 2: Create a TOTP object with a 6-digit code length (the default is 6)
     totp = pyotp.TOTP(otp_secret, digits=6)
-
-    # Step 3: Generate the OTP
     otp_code = totp.now()
 
     print(f"Generated OTP: {otp_code}")
-    print("------otp_secret-------", otp_secret, type(otp_secret))
-    print("------otp_secret-------", phone_number, type(phone_number))
     try:
-        print(redis_client.set(phone_number, otp))
-        
-        redis_client.setex(phone_number, expire_time, otp)
+        redis_client.setex(phone_number, 60, otp_secret)
     except Exception as e:
         log.error(f"Error while store OTP: {e}")
         return False

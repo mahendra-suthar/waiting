@@ -62,8 +62,11 @@ def verify_otp(phone_number, otp_code):
     """
     try:
         otp_secret = redis_client.get(phone_number)
+        print("-----otp_secret------", otp_secret)
         if otp_secret:
             totp = pyotp.TOTP(otp_secret)
+            print("-----code----", totp)
+            print("-----otp_secret----", otp_secret)
             return totp.verify(otp_code)
         else:
             return False

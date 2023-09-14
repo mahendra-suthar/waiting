@@ -43,7 +43,6 @@ def verify_phone_otp_and_login(user):
             print("-----phone_number--------", phone_number)
             user_obj = user_collection.find_one({'phone_number': phone_number})
             print("-----user_obj-if--------", user_obj)
-            # user_id = None
             if not user_obj:
                 try:
                     user_id = insert_user_request({'phone_number': phone_number})
@@ -55,6 +54,7 @@ def verify_phone_otp_and_login(user):
             print("-----user_id---------", user_id)
             if verify_otp(phone_number, otp):
                 token = create_jwt_token(user_id)
+                print("--token------", token)
                 user_obj['_id'] = str(user_id)
                 return_data = {
                     'token': token,

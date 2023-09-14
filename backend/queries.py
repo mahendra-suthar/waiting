@@ -18,12 +18,10 @@ def filter_data(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="filter dict not found")
 
         result = collection.find_one(filter_dict)
-        print("-----result------", result)
         if result:
-            result['_id'] = str(result['_id'])
-            return success_response(data=result, status=status.HTTP_200_OK, message="Data get successfully")
+            return True
         else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Data not found")
+            return False
     except Exception as error:
         log.error(f"Error while getting a {collection_name} from the database: {str(error)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
@@ -37,7 +35,7 @@ def insert_item(
         collection = client_db[collection_name]
         if not item_data:
             HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item data not found")
-
+        print("-----item_data---", item_data)
         result = collection.insert_one(item_data)
         print("-----result---", result)
 

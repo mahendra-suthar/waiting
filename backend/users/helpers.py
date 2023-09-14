@@ -27,7 +27,7 @@ def insert_user_request(user_dict: dict) -> str:
         response_data = filter_data(collection_name='users', filter_dict=filter_dict)
         if response_data:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone Number or Email already exist")
-
+        print("---user_dict---", user_dict)
         res_data = insert_item(collection_name='users', item_data=user_dict)
         print("---res_data---", res_data)
         # else:

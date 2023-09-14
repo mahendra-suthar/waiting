@@ -1,6 +1,6 @@
 import pyotp
 import random
-from fastapi import HTTPException
+from datetime import datetime
 from twilio.rest import Client
 
 from config.config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
@@ -8,17 +8,19 @@ from config.redis import redis_client
 from logs import logger as log
 
 
-def success_response(data=None, message=None):
+def success_response(status=200, data=None, message=None):
     return_data = dict()
     return_data["data"] = data
+    return_data["status"] = status
     return_data["success"] = True
     return_data["message"] = message
     return return_data
 
 
-def error_response(data=None, error=None):
+def error_response(status=500, data=None, error=None):
     return_data = dict()
     return_data["data"] = data
+    return_data["status"] = status
     return_data["success"] = False
     return_data["error"] = error
     return return_data
@@ -41,6 +43,11 @@ def generate_and_store_otp_secret(phone_number):
 
     print(f"Generated OTP: {otp_code}")
     try:
+        send_otp_via_sms(phone_number, otp_code)
+    except Exception as e:
+        log.error(f"Error while sending OTP: {e}")
+        return False
+    try:
         redis_client.setex(phone_number, 60, otp_secret)
     except Exception as e:
         log.error(f"Error while store OTP: {e}")
@@ -55,10 +62,8 @@ def verify_otp(phone_number, otp_code):
     """
     try:
         otp_secret = redis_client.get(phone_number)
-        print("------otp_secret-------", otp_secret)
         if otp_secret:
             totp = pyotp.TOTP(otp_secret)
-            print("------totp.verify(otp_code)-------", totp.verify(otp_code))
             return totp.verify(otp_code)
         else:
             return False
@@ -76,3 +81,8 @@ def send_otp_via_sms(phone_number, otp):
         to=phone_number
     )
     return message
+
+
+def get_current_timestamp_utc():
+    current_utc_timestamp = int(datetime.utcnow().timestamp())
+    return current_utc_timestamp

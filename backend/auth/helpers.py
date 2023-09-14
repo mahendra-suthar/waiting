@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 
 from logs import logger as log
 from config.database import client_db
-from backend.users.helpers import insert_user
+from backend.users.helpers import insert_user_request
 from config.config import SECRET_KEY, ALGORITHM
 from ..utils import success_response, generate_and_store_otp_secret, verify_otp
 
@@ -20,8 +20,11 @@ def send_phone_otp(user):
     try:
         phone_number = user.get("phone_number", None)
         if phone_number:
-            generate_and_store_otp_secret(phone_number)
-            return success_response(message="Successfully send OTP")
+            sent = generate_and_store_otp_secret(phone_number)
+            if sent:
+                return success_response(message="Successfully send OTP")
+            else:
+                raise HTTPException(status_code=409, detail="Something went wrong during save OTP")
         else:
             raise HTTPException(status_code=409, detail="Please enter valid phone number")
     except Exception as e:
@@ -43,7 +46,7 @@ def verify_phone_otp_and_login(user):
             # user_id = None
             if not user_obj:
                 try:
-                    user_id = insert_user({'phone_number': phone_number})
+                    user_id = insert_user_request({'phone_number': phone_number})
                 except Exception as error:
                     log.error(f"Error while register user: {error}")
                     raise HTTPException(status_code=500, detail="Error while register user")

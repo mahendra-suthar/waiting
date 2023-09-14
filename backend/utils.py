@@ -65,11 +65,15 @@ def verify_otp(phone_number, otp_code):
         print("-----otp_secret------", otp_secret)
         if otp_secret:
             totp = pyotp.TOTP(otp_secret)
-            print("-----code----", totp.verify(otp_code))
-            print("-----otp_secret----", otp_secret)
-            is_verify = totp.verify(otp_code)
-            if is_verify:
-                return True
+            if totp:
+                print("-----code----", totp.verify(otp_code))
+                print("-----otp_secret----", otp_secret)
+                is_verify = totp.verify(otp_code)
+                print("-----is_verify----", is_verify)
+                if is_verify:
+                    return True
+                else:
+                    return False
             else:
                 return False
         else:

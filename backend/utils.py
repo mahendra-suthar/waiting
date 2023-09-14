@@ -48,7 +48,8 @@ def generate_and_store_otp_secret(phone_number):
         log.error(f"Error while sending OTP: {e}")
         return False
     try:
-        redis_client.setex(phone_number, 60, otp_secret)
+        print("-------otps------", otp_secret, type(otp_secret))
+        redis_client.setex(phone_number, 30, otp_secret)
     except Exception as e:
         log.error(f"Error while store OTP: {e}")
         return False
@@ -62,24 +63,24 @@ def verify_otp(phone_number, otp_code):
     """
     try:
         otp_secret = redis_client.get(phone_number)
-        print("-----otp_secret------", otp_secret)
         if otp_secret:
-            totp = pyotp.TOTP(otp_secret)
-            if totp:
-                print("-----code----", totp.verify(otp_code))
-                print("-----otp_secret----", otp_secret)
-                is_verify = totp.verify(otp_code)
-                print("-----is_verify----", is_verify)
-                if is_verify:
-                    return True
-                else:
-                    return False
+            totp = pyotp.TOTP(otp_secret.decode('utf-8'))  # Convert bytes to str
+            print("-----totp------", totp)
+            is_verify = totp.verify(otp_code)
+            print("-----is_verify------", is_verify)
+            if is_verify:
+                # Remove the OTP secret from Redis after successful verification
+                redis_client.delete(phone_number)
+                return True
             else:
                 return False
         else:
             return False
+    except (pyotp.otp.InvalidToken, pyotp.otp.ExpiredToken, pyotp.otp.InvalidBase32) as otp_error:
+        log.error(f"Error during OTP verification: {otp_error}")
+        return False
     except Exception as error:
-        log.error(f"Error while verify OTP: {error}")
+        log.error(f"Unexpected error during OTP verification: {error}")
         return False
 
 

@@ -9,7 +9,7 @@ from backend.users.helpers import insert_user_request
 from config.config import SECRET_KEY, ALGORITHM
 from ..utils import success_response, generate_and_store_otp_secret, verify_otp
 
-
+print("------client_db-------", client_db)
 user_collection = client_db['users']
 
 

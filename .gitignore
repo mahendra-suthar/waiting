@@ -6,6 +6,7 @@ __pycache__
 venv/
 .env/
 
+
 # Ignore IDE-specific files and directories
 .vscode/
 .idea/
@@ -31,4 +32,4 @@ secrets.ini
 secrets.yaml
 
 # Ignore backup files created by text editors
-*~
+config/redis.py

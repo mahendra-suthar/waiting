@@ -5,7 +5,7 @@ load_dotenv()  # take environment variables from .env.
 
 
 MONGODB_CONNECTION_URI = os.environ.get('MONGODB_CONNECTION_URI')
-DB_NAME = os.environ.get('DB_NAME')
+DB_NAME = os.environ.get('MONGODB_DATABASE')
 
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
@@ -18,3 +18,5 @@ REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD')
 REDIS_HOST = os.environ.get('REDIS_HOST')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 REDIS_DB = os.environ.get('REDIS_DB')
+
+ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get('ACCESS_TOKEN_EXPIRE_MINUTES')

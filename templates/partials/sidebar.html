@@ -1,0 +1,31 @@
+{% macro sidebar(Table_name, url ) -%}
+{% if name==Table_name %}
+  <div class="d-flex bg-secondary-subtle align-items-center border-bottom">
+  {% else %}
+  <div class="d-flex align-items-center border-bottom">
+  {% endif %}
+    <a class="btn p-3" href="/web/{{url}}"
+      ><i class="fa fa-tachometer"></i><h6 class="mb-0 ms-3">{{Table_name}}</h6></a
+    >
+  </div>
+{% endmacro -%}
+
+
+<div class="col-sm-3 col-md-2">
+  <div class="leftSideBar shadow-sm vh-100">
+    <div class="card border-0 pt-3 pb-3">
+      <div class="brand fs-2 mb-4 ps-3">
+        <i class="fa fa-tachometer"></i>
+        Admin pannel
+      </div>
+      {{ sidebar("Users", "users") }}
+<!--      {{ sidebar("Network", 'network') }}-->
+<!--      {{ sidebar("SymbolNetwork", "symbol-network" ) }}-->
+<!--      {{ sidebar("Network blockchain connection", "network-blockchain-connection") }}-->
+<!--      {{ sidebar("Network wallet connection", "network-wallet-connection") }}-->
+<!--      {{ sidebar("Transfer request", "transfer-requests") }}-->
+<!--      {{ sidebar("Recognized transfer", "recognized-transfer") }}-->
+<!--      {{ sidebar("Transfer requests tasks", "transfer-requests-tasks") }}-->
+    </div>
+  </div>
+</div>

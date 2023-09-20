@@ -1,0 +1,78 @@
+{% extends './partials/base.html' %} {% block title %}{{ name }} {% endblock %}
+{% include './admin/delete.html' %}
+    {% block content %}
+    <div class="col-sm-9 col-md-10">
+
+      <div class="d-flex align-items-center justify-content-between title-bar">
+        <h1 class="table-title">{{name}}</h1>
+        {% if modify %}
+          <a class="btn btn-info" href="/admin/{{table_name}}/new">Create new</a>
+        {% endif %}
+      </div>
+      <div class="text-white w-100 text-center rounded m-0 text-uppercase">
+        <div style="overflow-x:auto;">
+        <table id="myTable" class="display">
+          <thead>
+
+            <tr>
+              {% for column in columns %}
+              <th>{{ column }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.datatables.net/1.11.2/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.html5.min.js"></script>
+        <script>
+
+            $(document).ready(function () {
+                let table_name = "{{table_name}}"
+              $.ajax({
+                url: '/api/v1/' + table_name,
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                  var data = response['data']; // Assuming your API response is an array of dictionaries
+
+                  // Get the keys from the first object in the response array
+                  var keys = Object.keys(data[0]);
+
+                  var columns = keys.map(function(key) {
+                    console.log("data, key", data, key)
+                    return { data: key };
+                  });
+
+                  $('#myTable').DataTable({
+                    pagingType: 'full_numbers',
+                    lengthMenu: [5, 10, 25],
+                    pageLength: 5,
+                    order: [[0, 'asc']],
+                    searching: true,
+                    language: {
+                      paginate: {
+                        first: 'First',
+                        last: 'Last',
+                        next: 'Next',
+                        previous: 'Prev',
+                      },
+                    },
+                    data: data,
+                    columns: columns,
+                  });
+                },
+                error: function(error) {
+                  console.error('Error fetching data:', error);
+                }
+              });
+            });
+          </script>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

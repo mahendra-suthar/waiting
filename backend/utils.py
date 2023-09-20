@@ -31,6 +31,29 @@ def generate_otp():
     return str(random.randint(1000, 9999))
 
 
+def temp_gen_otp_and_store(phone_number):
+    try:
+        redis_client.setex(phone_number, 30, 123456)
+    except Exception as e:
+        log.error(f"Error while store OTP: {e}")
+        return False
+    return True
+
+
+
+def temp_verify_otp(phone_number, otp_code):
+    try:
+        otp = redis_client.get(phone_number)
+        if int(otp_code) == 123456:
+            redis_client.delete(phone_number)
+            return True
+        else:
+            return False
+    except Exception as e:
+        log.error(f"Error while store OTP: {e}")
+        return False
+
+
 # Function to generate and store OTP secret for a user
 def generate_and_store_otp_secret(phone_number):
     """
@@ -48,7 +71,6 @@ def generate_and_store_otp_secret(phone_number):
         log.error(f"Error while sending OTP: {e}")
         return False
     try:
-        print("-------otps------", otp_secret, type(otp_secret))
         redis_client.setex(phone_number, 30, otp_secret)
     except Exception as e:
         log.error(f"Error while store OTP: {e}")
@@ -65,9 +87,7 @@ def verify_otp(phone_number, otp_code):
         otp_secret = redis_client.get(phone_number)
         if otp_secret:
             totp = pyotp.TOTP(otp_secret.decode('utf-8'))  # Convert bytes to str
-            print("-----totp------", totp)
             is_verify = totp.verify(otp_code)
-            print("-----is_verify------", is_verify)
             if is_verify:
                 # Remove the OTP secret from Redis after successful verification
                 redis_client.delete(phone_number)

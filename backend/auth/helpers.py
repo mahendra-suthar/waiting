@@ -6,10 +6,9 @@ from fastapi.encoders import jsonable_encoder
 from logs import logger as log
 from config.database import client_db
 from backend.users.helpers import insert_user_request
-from config.config import SECRET_KEY, ALGORITHM
-from ..utils import success_response, generate_and_store_otp_secret, verify_otp
+from config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from ..utils import success_response, temp_gen_otp_and_store, temp_verify_otp
 
-print("------client_db-------", client_db)
 user_collection = client_db['users']
 
 
@@ -20,7 +19,8 @@ def send_phone_otp(user):
     try:
         phone_number = user.get("phone_number", None)
         if phone_number:
-            sent = generate_and_store_otp_secret(phone_number)
+            # sent = generate_and_store_otp_secret(phone_number)
+            sent = temp_gen_otp_and_store(phone_number)
             if sent:
                 return success_response(message="Successfully send OTP")
             else:
@@ -40,22 +40,13 @@ def verify_phone_otp_and_login(user):
         phone_number = user.get("phone_number", None)
         otp = user.get("otp", None)
         if phone_number:
-            print("-----phone_number--------", phone_number)
-            user_obj = user_collection.find_one({'phone_number': phone_number})
-            print("-----user_obj-if--------", user_obj)
-            if not user_obj:
-                try:
+            if temp_verify_otp(phone_number, otp):
+                user_obj = user_collection.find_one({'phone_number': phone_number})
+                if not user_obj:
                     user_id = insert_user_request({'phone_number': phone_number})
-                except Exception as error:
-                    log.error(f"Error while register user: {error}")
-                    raise HTTPException(status_code=500, detail="Error while register user")
-            else:
-                user_id = user_obj['_id']
-            print("-----user_id---------", user_id)
-            if verify_otp(phone_number, otp):
+                else:
+                    user_id = str(user_obj['_id'])
                 token = create_jwt_token(user_id)
-                print("--token------", token)
-                user_obj['_id'] = str(user_id)
                 return_data = {
                     'token': token,
                     'user': jsonable_encoder(user_obj)
@@ -76,7 +67,7 @@ def create_jwt_token(user_id: any):
         if user_id:
             payload = {
                 "sub": str(user_id),
-                "exp": datetime.utcnow() + timedelta(minutes=15)
+                "exp": datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         else:

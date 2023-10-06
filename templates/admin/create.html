@@ -7,9 +7,7 @@
   <form method="post" class="uc-form">
     {% for field in form %}
     <div class="form-group">
-      <label for="{{ field.id_for_label }}" class="form-label"
-        >{{ field.label }}</label
-      >
+      <label for="{{ field.id_for_label }}" class="form-label>{{ field.label }}</label>
       {{ field }} {% if field.errors %}
       <ul class="text-danger">
         {% for error in field.errors %}
@@ -19,6 +17,15 @@
       {% endif %}
     </div>
     {% endfor %}
+
+    {% if error_message %}
+    <div class="alert alert-danger">
+      {% for key, value in error_message.items() %}
+        <li>{{ key }}: {{value}}</li>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="btn-row">
       <button type="submit" class="btn btn-primary">Submit</button>
     </div>

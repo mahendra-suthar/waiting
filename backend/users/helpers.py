@@ -19,7 +19,7 @@ async def insert_user_request(user_dict: dict) -> str:
     is_phone_exist = filter_data(user_collection, filter_dict={'phone_number': user_dict.get("phone_number")})
     if is_phone_exist:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone Number already exist")
-
+    print("------user_dict-----", user_dict)
     res_data = insert_item(user_collection, item_data=user_dict)
     return res_data
 

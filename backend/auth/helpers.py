@@ -1,7 +1,9 @@
-import jwt
-from fastapi import HTTPException
+from jose import JWTError, jwt
+from fastapi import Depends, HTTPException
 from datetime import datetime, timedelta
 from fastapi.encoders import jsonable_encoder
+from fastapi.security import OAuth2PasswordBearer, HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.requests import Request
 
 from logs import logger as log
 from config.database import client_db
@@ -10,6 +12,9 @@ from config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..utils import success_response, temp_gen_otp_and_store, temp_verify_otp
 
 user_collection = client_db['users']
+# oauth2_scheme = OAuth2PasswordBearer(
+#     tokenUrl="api/v1/verify_otp"
+# )
 
 
 def send_phone_otp(user):
@@ -46,12 +51,14 @@ def verify_phone_otp_and_login(user):
                     user_id = insert_user_request({'phone_number': phone_number})
                 else:
                     user_id = str(user_obj['_id'])
+
+                user_obj['_id'] = user_id
                 token = create_jwt_token(user_id)
                 return_data = {
                     'token': token,
                     'user': jsonable_encoder(user_obj)
                 }
-                return return_data
+                return success_response(data=return_data, message="Successfully logged in")
             else:
                 raise HTTPException(status_code=400, detail="OTP is not valid")
         else:
@@ -78,6 +85,47 @@ def create_jwt_token(user_id: any):
         log.error(f"Error while creating JWT token: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
     return token
+
+
+def decode_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload.get("sub")
+    except JWTError:
+        return None
+
+
+def get_current_user(token: str):
+    if token is None:
+        raise HTTPException(status_code=401, detail="Token authentication failed")
+    username: str = decode_token(token)
+    if username is None:
+        raise HTTPException(status_code=401, detail="Token authentication failed")
+    return username
+
+
+class JWTBearer(HTTPBearer):
+    def __init__(self, auto_error: bool = True):
+        super(JWTBearer, self).__init__(auto_error=auto_error)
+
+    async def __call__(self, request: Request):
+        credentials: HTTPAuthorizationCredentials = await super(
+            JWTBearer, self
+        ).__call__(request)
+        if credentials:
+            if not credentials.scheme == "Bearer":
+                raise HTTPException(
+                    status_code=403, detail="Invalid authentication scheme."
+                )
+
+            if not get_current_user(credentials.credentials):
+                raise HTTPException(
+                    status_code=403, detail="Invalid token or expired token."
+                )
+            return credentials.credentials
+        else:
+            raise HTTPException(status_code=403, detail="Invalid authorization code.")
+
 
 
 

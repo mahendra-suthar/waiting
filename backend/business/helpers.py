@@ -4,9 +4,24 @@ from typing import Any
 
 from config.database import client_db
 from ..queries import insert_item, update_item, get_item, get_item_list, filter_data
+from .schema import BusinessData
+from ..queries import prepare_item_list
 
 
-user_collection = client_db['business']
+collection_name = 'business'
+business_collection = client_db[collection_name]
+
+
+def jinja_variables_for_business():
+    data_dict = {
+        'collection_name': collection_name,
+        'schema': BusinessData
+    }
+    columns = list(BusinessData.__annotations__.keys())
+    data = prepare_item_list(data_dict)
+    table_name = collection_name
+    name = 'Business'
+    return columns, data, name, table_name
 
 
 async def insert_business_request(business_dict: dict) -> str:

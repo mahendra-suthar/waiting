@@ -4,14 +4,13 @@ from typing import Optional
 from enum import Enum as PyEnum
 from pydantic import Field, EmailStr
 
-from constants import CUSTOMER, MERCHANT, EMPLOYEE
 from .base import BaseCommonModel
 
 
 class UserType(str, PyEnum):
-    customer = CUSTOMER
-    merchant = MERCHANT
-    employee = EMPLOYEE
+    customer = 1
+    merchant = 2
+    employee = 3
 
 
 class User(BaseCommonModel):

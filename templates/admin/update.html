@@ -7,9 +7,10 @@
   <form method="POST" class="uc-form">
     {% for field in form %}
     <div class="form-group">
-      <label for="{{ field.id_for_label }}" class="form-label"
-        >{{ field.label }}</label
-      >
+      {% if field.label != 'business_id' %}
+        <label for="{{ field.id_for_label }}" class="form-label" >{{ field.label }}</label>
+      {% endif %}
+
       {{ field }} {% if field.errors %}
       <ul class="text-danger">
         {% for error in field.errors %}

@@ -6,6 +6,7 @@ from twilio.rest import Client
 from config.config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
 from config.redis import redis_client
 from logs import logger as log
+from config.database import client_db
 
 
 def success_response(status=200, data=None, message=None):
@@ -40,12 +41,11 @@ def temp_gen_otp_and_store(phone_number):
     return True
 
 
-
 def temp_verify_otp(phone_number, otp_code):
     try:
-        otp = redis_client.get(phone_number)
-        if int(otp_code) == 123456:
-            redis_client.delete(phone_number)
+        # otp = redis_client.get(phone_number)
+        if int(otp_code):
+            # redis_client.delete(phone_number)
             return True
         else:
             return False
@@ -118,3 +118,25 @@ def send_otp_via_sms(phone_number, otp):
 def get_current_timestamp_utc():
     current_utc_timestamp = int(datetime.utcnow().timestamp())
     return current_utc_timestamp
+
+
+def prepare_dropdown_for_forms(collection_name: str, label: str, value: str):
+    from .queries import generate_mongo_query
+    try:
+        query, projections = generate_mongo_query({'is_deleted': False}, projection_fields=[label, value])
+        database = client_db
+        collection = database[collection_name]
+        result = collection.find(query, projections)
+        documents = [(str(doc[value]), doc[label]) for doc in result if doc.get(value)]
+        print("-------documents-------", documents)
+        documents = [(None, 'Select Item...')] + documents
+        return documents
+    except Exception as error:
+        log.error(f"Something went wrong during prepare_dropdown_data: {error}")
+        return []
+
+
+def prepare_static_choice_dropdown(choices):
+    choice_list = [(int(value), label) for value, label in choices]
+    choice_list = [(None, 'Select Item...')] + choice_list
+    return choice_list

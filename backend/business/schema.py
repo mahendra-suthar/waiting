@@ -3,17 +3,21 @@ import uuid
 from typing import Optional
 from pydantic import BaseModel, EmailStr, constr, validator
 
+from ..constants import BUSINESS_REGISTERED
+
+business_collection = 'business'
+
 
 class RegisterBusiness(BaseModel):
     name: str
     email: EmailStr
     country_code: str
-    phone: constr(min_length=1, max_length=15)
+    phone_number: str
     password: str
-    address_id: Optional[uuid.UUID]
-    category_id: Optional[uuid.UUID]
+    address_id: Optional[str]
+    category_id: Optional[str]
     about_business: Optional[str]
-    status: Optional[int]
+    status: Optional[int] = BUSINESS_REGISTERED
     email_verify: bool = False
     phone_verify: bool = False
     is_deleted: bool = False
@@ -21,25 +25,30 @@ class RegisterBusiness(BaseModel):
     class Config:
         from_attributes = True
 
-    @validator("phone", pre=True)
-    def validate_mobile(cls, value):
-        if not re.match(r"^\+?[1-9]\d{1,14}$", value):
-            raise ValueError("Invalid mobile number format")
-        return value
-    # Custom validation for mobile number
-
 
 class UpdateBusiness(BaseModel):
     name: str
     email: EmailStr
     country_code: str
-    phone: constr(min_length=1, max_length=15)
+    phone_number: constr(min_length=1, max_length=15)
     password: str
-    address_id: Optional[uuid.UUID]
-    category_id: Optional[uuid.UUID]
+    address_id: Optional[str]
+    category_id: Optional[str]
     about_business: Optional[str]
-    status: Optional[int]
 
     class Config:
         from_attributes = True
     # Custom validation for mobile number
+
+
+class BusinessData(BaseModel):
+    _id: str
+    name: str
+    email: EmailStr
+    country_code: str
+    phone: str
+    password: str
+    address_id: str
+    category_id: str
+    about_business: str
+    status: int

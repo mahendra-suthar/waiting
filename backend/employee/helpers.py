@@ -1,29 +1,26 @@
-from fastapi import HTTPException, status
-
+from .schema import EmployeeData
 from config.database import client_db
-from ..queries import insert_item, filter_data
+from ..queries import prepare_item_list
 
-user_collection = client_db['users']
+employee_collection = 'employee'
 
 
-async def insert_employee_request(employee_dict: dict) -> str:
-    """
-    Add user
-    """
-    collection_name = 'employee'
-    email = employee_dict.get("email")
-    phone_number = employee_dict.get("phone_number")
+def jinja_variables_for_employees():
+    data_dict = {
+        'collection_name': employee_collection,
+        'schema': EmployeeData
+    }
+    columns = list(EmployeeData.__annotations__.keys())
 
-    is_email_exist = filter_data(collection_name, filter_dict={'email': email})
-    if is_email_exist:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exist")
+    data = prepare_item_list(data_dict)
+    table_name = employee_collection
+    name = 'Employee'
+    return columns, data, name, table_name
 
-    is_phone_exist = filter_data(
-        collection_name,
-        filter_dict={'phone_number': phone_number}
-    )
-    if is_phone_exist:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone Number already exist")
 
-    res_data = insert_item(collection_name='users', item_data=employee_dict)
-    return res_data
+# async def insert_employee_request(employee_dict: dict) -> str:
+#     """
+#     Add user
+#     """
+#     res_data = insert_item(collection_name='users', item_data=employee_dict)
+#     return res_data

@@ -1,8 +1,9 @@
 from bson import ObjectId
 from fastapi import status
-from typing import List, Any
+from typing import Any
 from fastapi import HTTPException
-from fastapi.exceptions import RequestValidationError
+from pymongo import UpdateOne
+from fastapi.encoders import jsonable_encoder
 
 from logs import logger as log
 from config.database import client_db
@@ -19,6 +20,7 @@ def filter_data(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="filter dict not found")
 
     result = collection.find_one(filter_dict)
+    print("---result----------", result)
     if result:
         return True
     else:
@@ -30,23 +32,22 @@ def filter_data(
 
 def insert_item(
     collection_name: str = None,
-    item_data: dict = None
+    item_data: any = None,
+    created_by: any = None
 ) -> Any:
-    # try:
-    collection = client_db[collection_name]
-    if not item_data:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item data not found")
-    item_data['created_at'] = get_current_timestamp_utc()
-    item_data['created_by'] = None
     try:
+        collection = client_db[collection_name]
+        if not item_data:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item data not found")
+
+        if not isinstance(item_data, dict):
+            item_data = jsonable_encoder(item_data)
+
+        item_data['created_at'] = get_current_timestamp_utc()
+        item_data['created_by'] = created_by
+        print("-----item_data-----", item_data)
         result = collection.insert_one(item_data)
         return result.inserted_id
-    # except RequestValidationError as error:
-    #     log.error(f"Error while inserting data into {collection_name}: {str(error)}")
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         detail=f"Error while inserting data into {collection_name}"
-    #     )
     except Exception as error:
         log.error(f"Error while inserting data into {collection_name}: {str(error)}")
         raise HTTPException(
@@ -92,7 +93,50 @@ def get_item_list(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Data not found")
 
 
-async def update_item(
+def prepare_item_list(data_dict: dict) -> Any:
+    # Extract data from data_dict
+    collection_name = data_dict.get('collection_name', None)
+    schema = data_dict.get('schema', None)
+    page_number = data_dict.get('page_number', 1)
+    page_size = data_dict.get('page_size', 10)
+    search_string = data_dict.get('search_string', None)
+    foreign_keys = data_dict.get("foreign_keys", {})
+
+    collection = client_db[collection_name]
+
+    # columns to show
+    column_list = list(schema.__annotations__.keys()) if schema else []
+
+    # preparing query using common function
+    filter_conditions = {'is_deleted': False}
+    filter_query, projection = generate_mongo_query(filter_conditions, projection_fields=column_list)
+
+    # Foreign key data
+    if foreign_keys:
+        sub_collection = client_db[foreign_keys['collection']]
+        columns = foreign_keys['columns']
+        filter_query, projection = generate_mongo_query(filter_conditions, projection_fields=columns)
+        result = sub_collection.find(filter_conditions, projection)
+        sub_documents = {{str(doc['_id']): doc} for doc in result}
+
+    # preparing pagination data
+    if page_number < 1 or page_size < 1:
+        raise HTTPException(status_code=400, detail="Invalid page or page_size")
+
+    skip = (page_number - 1) * page_size
+    limit = page_size
+
+    # fetching data from database
+    # result = collection.find(filter_query, {**projection}).skip(skip).limit(limit)
+    result = collection.find(filter_query, {**projection})
+    if result:
+        documents = [{**doc, '_id': str(doc['_id'])} for doc in result]
+        return success_response(data=result, status=status.HTTP_200_OK, message="Data get successfully")
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Data not found")
+
+
+def update_item(
     collection_name: str = None,
     item_id: str = None,
     item_data: dict = None
@@ -100,11 +144,13 @@ async def update_item(
     try:
         collection = client_db[collection_name]
         if not item_id:
-            # return error_response(status=status.HTTP_400_BAD_REQUEST, error="Item id not found")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item id not found")
         if not item_data:
-            # return error_response(status=status.HTTP_400_BAD_REQUEST, error="Updated data not found")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Updated data not found")
+
+        # query = generate_mongo_query({'is_deleted': False, 'name': item_data['name'], '_id': {'$ne': item_id}})
+        # if collection.find_one(query):
+        #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Category already exist")
 
         item_data['updated_at'] = get_current_timestamp_utc()
         item_data['updated_by'] = None
@@ -116,15 +162,75 @@ async def update_item(
         if result.modified_count == 1:
             return success_response(status=status.HTTP_200_OK, message="Successfully updated data")
         else:
-            # return error_response(status=status.HTTP_400_BAD_REQUEST, error="Item not updated")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item not found")
 
     except Exception as error:
         log.error(f"Error while updating a {collection_name} into the database: {str(error)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
-        # return error_response(status=status.HTTP_500_INTERNAL_SERVER_ERROR, error=f"Internal server error")
 
 
-# async def delete_item(db: AsyncIOMotorClient, collection_name: str, item_id: str) -> bool:
-#     result = await db.get_database()[collection_name].delete_one({"_id": item_id})
-#     return result.deleted_count == 1
+def delete_item(collection_name: str, item_id: str) -> bool:
+    try:
+        collection = client_db[collection_name]
+        result = collection.update_one(
+            {"_id": ObjectId(item_id)},
+            {"$set": {'is_deleted': True}}
+        )
+        if result.modified_count == 1:
+            return success_response(status=status.HTTP_200_OK, message="Successfully deleted data")
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item not found")
+    except Exception as error:
+        log.error(f"Error while deleting a {collection_name} into the database: {str(error)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
+
+
+def generate_mongo_query(filter_conditions=None, projection_fields=None):
+    """
+    Generate a MongoDB query.
+
+    Args:
+    - collection_name: The name of the MongoDB collection to query.
+    - filter_conditions: A dictionary specifying the filter conditions (optional).
+    - projection_fields: A list of fields to include or exclude from the result (optional).
+
+    Returns:
+    - query: The MongoDB query as a dictionary.
+    """
+    query = {}
+
+    if filter_conditions:
+        for field, condition in filter_conditions.items():
+            if condition is None:
+                continue
+            if isinstance(condition, dict):
+                query[field] = condition
+            else:
+                query[field] = {'$eq': condition}
+
+    projection = {}
+    if projection_fields:
+        for field in projection_fields:
+            projection[field] = 1
+
+    return query, projection
+
+
+def generate_mongo_update_query(filter_conditions, update_data):
+    """
+    Generate a MongoDB update query.
+
+    Args:
+    - collection_name: The name of the MongoDB collection to update.
+    - filter_conditions: A dictionary specifying the filter conditions to identify documents to update.
+    - update_data: A dictionary specifying the update operations to perform.
+
+    Returns:
+    - query: A list of MongoDB UpdateOne objects.
+    """
+    update_query = []
+
+    if filter_conditions and update_data:
+        update_query.append(UpdateOne(filter_conditions, {'$set': update_data}))
+
+    return update_query

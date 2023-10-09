@@ -5,7 +5,8 @@ from fastapi.responses import HTMLResponse, Response, RedirectResponse
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
 
-from ..web_helpers import jinja_variables_for_users
+# from ..web_helpers import jinja_variables_for_users
+from .helpers import jinja_variables_for_user
 from ..forms import UsersForm
 from .schema import RegisterUser, UpdateUser
 from ..queries import insert_item, update_item, delete_item, get_item
@@ -17,8 +18,9 @@ users_collection = 'users'
 
 @router.get("/user", response_class=HTMLResponse)
 async def users(request: Request) -> HTMLResponse:
-    columns, data, name, table_name = jinja_variables_for_users()
+    columns, data, name, table_name = jinja_variables_for_user()
     modify = True
+    print("------columns, data, name, table_name------", columns, data, name, table_name)
     return templates.TemplateResponse("admin/index.html", context=locals())
 
 

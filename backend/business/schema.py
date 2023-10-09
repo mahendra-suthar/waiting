@@ -10,17 +10,17 @@ business_collection = 'business'
 
 class RegisterBusiness(BaseModel):
     name: str
-    email: EmailStr
+    email: EmailStr = None
     country_code: str
     phone_number: str
-    password: str
-    address_id: Optional[str]
-    category_id: Optional[str]
-    about_business: Optional[str]
+    password: Optional[str] = None
+    address_id: Optional[str] = None
+    category_id: str
+    about_business: Optional[str] = None
     status: Optional[int] = BUSINESS_REGISTERED
     email_verify: bool = False
     phone_verify: bool = False
-    is_deleted: bool = False
+
 
     class Config:
         from_attributes = True

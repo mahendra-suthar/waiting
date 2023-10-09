@@ -8,7 +8,10 @@ from wtforms import (
     ValidationError,
     HiddenField,
     IntegerField,
-    BooleanField
+    BooleanField,
+    TimeField,
+    FieldList,
+    FormField
 )
 
 from wtforms.validators import DataRequired, Regexp, Email
@@ -16,7 +19,7 @@ from bson import ObjectId
 
 from .queries import filter_data
 from .utils import prepare_dropdown_for_forms, get_current_timestamp_utc, prepare_static_choice_dropdown
-from .constants import DEFAULT_COUNTRY_CODE, gender_choices
+from .constants import DEFAULT_COUNTRY_CODE, gender_choices, days_of_week_choices
 
 category_collection = 'category'
 business_collection = 'business'
@@ -24,6 +27,7 @@ employee_collection = 'employee'
 users_collection = 'users'
 queue_collection = 'queue'
 service_collection = 'service'
+business_schedule_collection = 'business_schedule'
 phone_number_regex = r"^\+?\d{1,15}$"
 country_code_regex = r"^\+[1-9]\d*$"
 
@@ -38,6 +42,39 @@ class CategoryForm(StarletteForm):
             label='name',
             value='_id'
         ))
+
+
+class BusinessScheduleForm(StarletteForm):
+    business_schedule_id = HiddenField("business_schedule_id")
+    merchant_id = SelectField(
+        "Business",
+        validators=[DataRequired()],
+        choices=prepare_dropdown_for_forms(business_collection, 'name', '_id')
+    )
+    day_of_week = SelectField(
+        "Day Of Week",
+        validators=[DataRequired()],
+        choices=prepare_static_choice_dropdown(days_of_week_choices)
+    )
+    opening_time = TimeField("Opening Time", validators=[DataRequired()])
+    closing_time = TimeField("Closing Time", validators=[DataRequired()])
+    always_open = BooleanField("Is Always Open")
+
+    def validate_day_of_week(self, field):
+        item_id = self.data.get("business_schedule_id")
+        filter_dict = {'day_of_week': field.data, "is_deleted": False}
+        if item_id:
+            filter_dict['_id'] = {'$ne': item_id}
+        if filter_data(business_schedule_collection, filter_dict):
+            raise ValidationError("Day Of Week already exists for this business")
+
+    def validate_always_open(self, field):
+        item_id = self.data.get("business_schedule_id")
+        filter_dict = {'always_open': field.data, "is_deleted": False}
+        if item_id:
+            filter_dict['_id'] = {'$ne': item_id}
+        if filter_data(business_schedule_collection, filter_dict):
+            raise ValidationError("Business always opened")
 
 
 class BusinessForm(StarletteForm):
@@ -66,10 +103,6 @@ class BusinessForm(StarletteForm):
             label='name',
             value='_id'
         ))
-    # status = SelectField(
-    #     "Status",
-    #     choices=prepare_static_choice_dropdown(business_status_choices)
-    # )
 
     def validate_name(self, field):
         item_id = self.data.get("business_id")
@@ -160,6 +193,29 @@ class EmployeeForm(StarletteForm):
             raise ValidationError("Email already exists")
 
 
+class EmployeeServiceForm(StarletteForm):
+    employee_service_id = HiddenField("employee_service_id")
+    service_id = SelectField(
+        "Service",
+        validators=[DataRequired()],
+        choices=prepare_dropdown_for_forms(
+            collection_name=service_collection,
+            label='name',
+            value='_id'
+        ))
+    employee_id = SelectField(
+        "Employee",
+        validators=[DataRequired()],
+        choices=prepare_dropdown_for_forms(
+            collection_name=employee_collection,
+            label='email',
+            value='_id'
+        ))
+    description = TextAreaField("Description")
+    enqueue_time = IntegerField("Enqueue Time")
+    dequeue_time = IntegerField("Dequeue Time")
+
+
 class UsersForm(StarletteForm):
     user_id = HiddenField("user_id")
     first_name = StringField("First Name")
@@ -225,8 +281,8 @@ class QueueForm(StarletteForm):
             value='_id'
         ))
     limit = IntegerField("Limit", validators=[DataRequired()])
-    start_time = IntegerField("Start Time")
-    end_time = IntegerField("End Time")
+    start_time = TimeField("Start Time", validators=[DataRequired()])
+    end_time = TimeField("End Time", validators=[DataRequired()])
 
 
 class QueueUserForm(StarletteForm):

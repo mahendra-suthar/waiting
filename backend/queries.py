@@ -20,7 +20,6 @@ def filter_data(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="filter dict not found")
 
     result = collection.find_one(filter_dict)
-    print("---result----------", result)
     if result:
         return True
     else:
@@ -45,7 +44,9 @@ def insert_item(
 
         item_data['created_at'] = get_current_timestamp_utc()
         item_data['created_by'] = created_by
-        print("-----item_data-----", item_data)
+        item_data['updated_by'] = None
+        item_data['updated_at'] = get_current_timestamp_utc()
+        item_data['is_deleted'] = False
         result = collection.insert_one(item_data)
         return result.inserted_id
     except Exception as error:
@@ -112,12 +113,12 @@ def prepare_item_list(data_dict: dict) -> Any:
     filter_query, projection = generate_mongo_query(filter_conditions, projection_fields=column_list)
 
     # Foreign key data
-    if foreign_keys:
-        sub_collection = client_db[foreign_keys['collection']]
-        columns = foreign_keys['columns']
-        filter_query, projection = generate_mongo_query(filter_conditions, projection_fields=columns)
-        result = sub_collection.find(filter_conditions, projection)
-        sub_documents = {{str(doc['_id']): doc} for doc in result}
+    # if foreign_keys:
+    #     sub_collection = client_db[foreign_keys['collection']]
+    #     columns = foreign_keys['columns']
+    #     filter_query, projection = generate_mongo_query(filter_conditions, projection_fields=columns)
+    #     result = sub_collection.find(filter_conditions, projection)
+    #     sub_documents = {{str(doc['_id']): doc} for doc in result}
 
     # preparing pagination data
     if page_number < 1 or page_size < 1:
@@ -131,7 +132,7 @@ def prepare_item_list(data_dict: dict) -> Any:
     result = collection.find(filter_query, {**projection})
     if result:
         documents = [{**doc, '_id': str(doc['_id'])} for doc in result]
-        return success_response(data=result, status=status.HTTP_200_OK, message="Data get successfully")
+        return success_response(data=documents, status=status.HTTP_200_OK, message="Data get successfully")
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Data not found")
 
@@ -139,7 +140,8 @@ def prepare_item_list(data_dict: dict) -> Any:
 def update_item(
     collection_name: str = None,
     item_id: str = None,
-    item_data: dict = None
+    item_data: dict = None,
+    updated_by: str = None
 ) -> dict:
     try:
         collection = client_db[collection_name]
@@ -153,7 +155,7 @@ def update_item(
         #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Category already exist")
 
         item_data['updated_at'] = get_current_timestamp_utc()
-        item_data['updated_by'] = None
+        item_data['updated_by'] = updated_by
         result = collection.update_one(
             {"_id": ObjectId(item_id)},
             {"$set": item_data}

@@ -9,6 +9,7 @@ from .helpers import jinja_variables_for_queue_user
 from ..forms import QueueUserForm
 from .schema import RegisterQueueUser
 from ..queries import insert_item, update_item, delete_item, get_item
+from ..utils import get_current_timestamp_utc
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
@@ -50,7 +51,7 @@ async def save_queue_form(
             user_id=user_id,
             queue_id=queue_id,
             priority=priority,
-            enqueue_time=enqueue_time,
+            enqueue_time=get_current_timestamp_utc(),
             dequeue_time=dequeue_time
         )
         data_dict = jsonable_encoder(item_data)

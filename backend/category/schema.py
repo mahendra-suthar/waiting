@@ -8,7 +8,6 @@ class RegisterCategory(BaseModel):
     name: str
     description: str
     parent_category_id: Optional[str]
-    is_deleted: Optional[bool] = False
 
     class Config:
         from_attributes = True

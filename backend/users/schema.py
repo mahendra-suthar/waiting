@@ -18,7 +18,6 @@ class RegisterUser(BaseModel):
     date_of_birth: Optional[int]
     gender: int = MALE
     user_type: Optional[int] = CUSTOMER
-    is_deleted: Optional[bool] = False
 
     class Config:
         from_attributes = True
@@ -36,6 +35,24 @@ class UpdateUser(BaseModel):
     # user_type: Optional[int]
     date_of_birth: Optional[int]
     # gender: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
+class UserData(BaseModel):
+    first_name: Optional[str]
+    last_name: Optional[str]
+    full_name: Optional[str]
+    phone_number: str
+    email: Optional[EmailStr]
+    # address_id: Optional[uuid.UUID]
+    # merchant_id: Optional[str]
+    # employee_id: Optional[str]
+    date_of_birth: Optional[int]
+    gender: int
+    user_type: int
+    # is_deleted: Optional[bool] = False
 
     class Config:
         from_attributes = True

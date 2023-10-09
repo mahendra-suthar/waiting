@@ -13,7 +13,6 @@ class RegisterQueueUser(BaseModel):
     dequeue_time: int
     priority: bool = False
     status: int = QUEUE_USER_REGISTERED
-    is_deleted: Optional[bool] = False
 
     class Config:
         from_attributes = True

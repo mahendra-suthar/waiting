@@ -1,3 +1,4 @@
+from datetime import time
 from fastapi import Request, Form
 from fastapi.routing import APIRouter
 from fastapi.templating import Jinja2Templates
@@ -36,8 +37,8 @@ async def save_queue_form(
     merchant_id: str = Form(...),
     employee_id: str = Form(...),
     limit: int = Form(...),
-    start_time: Optional[int] = Form(0),
-    end_time: Optional[int] = Form(0),
+    start_time: time = Form(...),
+    end_time: time = Form(...),
 ) -> Response:
     form = QueueForm(request=request)
     form.name.data = name
@@ -63,3 +64,11 @@ async def save_queue_form(
         )
 
     return templates.TemplateResponse("admin/create.html", context=locals())
+
+
+@router.get("/queue/delete/{item_id}", response_class=HTMLResponse)
+def save_queue_update_form(item_id: str) -> RedirectResponse:
+    delete_item(queue_collection, item_id)
+    return RedirectResponse(
+        "/web/queue", status_code=302
+    )

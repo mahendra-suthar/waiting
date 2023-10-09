@@ -18,6 +18,8 @@ from backend.category.web import router as category_web_router
 from backend.queue.web import router as queue_web_router
 from backend.queue_user.web import router as queue_user_web_router
 from backend.service.web import router as service_web_router
+from backend.business_schedule.web import router as business_schedule_web_router
+from backend.employee_service.web import router as business_service_web_router
 
 from backend.utils import error_response
 
@@ -48,7 +50,8 @@ app.include_router(category_web_router, prefix="/web", tags=['CATEGORY'])
 app.include_router(queue_web_router, prefix="/web", tags=['QUEUE'])
 app.include_router(queue_user_web_router, prefix="/web", tags=['QUEUE_USER'])
 app.include_router(service_web_router, prefix="/web", tags=['SERVICE'])
-
+app.include_router(business_schedule_web_router, prefix="/web", tags=['BUSINESS_SCHEDULE'])
+app.include_router(business_service_web_router, prefix="/web", tags=['BUSINESS_SERVICE'])
 
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):

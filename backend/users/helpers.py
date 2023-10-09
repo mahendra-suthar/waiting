@@ -2,12 +2,13 @@ from fastapi import HTTPException, status
 from bson import ObjectId
 from typing import Any
 
-from ..queries import insert_item, update_item, get_item, get_item_list, filter_data
+from ..queries import insert_item, update_item, get_item, get_item_list, filter_data, prepare_item_list
+from .schema import UserData
 
 user_collection = 'users'
 
 
-async def insert_user_request(user_dict: dict) -> str:
+async def insert_user_request(user_dict: dict, created_by: str = None) -> str:
     """
     Add user
     """
@@ -19,8 +20,7 @@ async def insert_user_request(user_dict: dict) -> str:
     is_phone_exist = filter_data(user_collection, filter_dict={'phone_number': user_dict.get("phone_number")})
     if is_phone_exist:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone Number already exist")
-    print("------user_dict-----", user_dict)
-    res_data = insert_item(user_collection, item_data=user_dict)
+    res_data = insert_item(user_collection, item_data=user_dict, created_by=created_by)
     return res_data
 
 
@@ -68,5 +68,17 @@ def get_users_list() -> Any:
     """
     response_data = get_item_list(user_collection, columns=['_id', 'full_name', 'phone_number', 'email'])
     return response_data
+
+
+def jinja_variables_for_user():
+    data_dict = {
+        'collection_name': user_collection,
+        'schema': UserData
+    }
+    columns = list(UserData.__annotations__.keys())
+    data = prepare_item_list(data_dict)
+    table_name = user_collection
+    name = 'User'
+    return columns, data, name, table_name
 
 

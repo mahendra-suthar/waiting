@@ -11,7 +11,6 @@ class RegisterService(BaseModel):
     name: str
     description: str
     status: int = SERVICE_REGISTERED
-    is_deleted: Optional[bool] = False
 
     class Config:
         from_attributes = True

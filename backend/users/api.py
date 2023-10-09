@@ -23,7 +23,7 @@ async def create_user(current_user: str = Depends(JWTBearer()), user: RegisterUs
     Register user api
     """
     user_data = jsonable_encoder(user)
-    inserted_user = await insert_user_request(user_data)
+    inserted_user = await insert_user_request(user_data, created_by=current_user)
     response_data = success_response(data={'user_id': str(inserted_user)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 

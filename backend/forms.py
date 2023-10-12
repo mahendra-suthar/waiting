@@ -120,7 +120,6 @@ class BusinessForm(StarletteForm):
         filter_dict = {'phone_number': field.data, "is_deleted": False}
         if item_id:
             filter_dict['_id'] = {'$ne': item_id}
-        print("------filter_dict------", filter_dict)
         if filter_data(business_collection, filter_dict):
             raise ValidationError("Phone number already exists")
 

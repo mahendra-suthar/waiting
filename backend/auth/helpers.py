@@ -7,9 +7,10 @@ from fastapi.requests import Request
 
 from logs import logger as log
 from config.database import client_db
-from backend.users.helpers import insert_user_request
+from ..users.helpers import insert_user_request
 from config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..utils import success_response, temp_gen_otp_and_store, temp_verify_otp
+from ..queries import insert_item, update_item
 
 user_collection = client_db['users']
 # oauth2_scheme = OAuth2PasswordBearer(
@@ -17,7 +18,7 @@ user_collection = client_db['users']
 # )
 
 
-def send_phone_otp(user):
+def register_and_send_phone_otp(user):
     """
     Send OTP to phone number via sms
     """
@@ -25,6 +26,7 @@ def send_phone_otp(user):
         phone_number = user.get("phone_number", None)
         if phone_number:
             # sent = generate_and_store_otp_secret(phone_number)
+            insert_item('users', item_data=user)
             sent = temp_gen_otp_and_store(phone_number)
             if sent:
                 return success_response(message="Successfully send OTP")
@@ -48,7 +50,8 @@ def verify_phone_otp_and_login(user):
             if temp_verify_otp(phone_number, otp):
                 user_obj = user_collection.find_one({'phone_number': phone_number})
                 if not user_obj:
-                    user_id = insert_user_request({'phone_number': phone_number})
+                    user_id = update_item({
+                        'phone_number': phone_number})
                 else:
                     user_id = str(user_obj['_id'])
 
@@ -117,12 +120,12 @@ class JWTBearer(HTTPBearer):
                 raise HTTPException(
                     status_code=403, detail="Invalid authentication scheme."
                 )
-
-            if not get_current_user(credentials.credentials):
+            current_user = get_current_user(credentials.credentials)
+            if not current_user:
                 raise HTTPException(
                     status_code=403, detail="Invalid token or expired token."
                 )
-            return credentials.credentials
+            return current_user
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
 

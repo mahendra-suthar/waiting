@@ -24,7 +24,7 @@ def create_employee(employee: RegisterEmployee = Body(...)) -> Any:
 
 
 @router.get("/v1/employee", response_description="Get all employees")
-async def get_users(
+async def get_employees(
         page_number: int = 1,
         page_size: int = 10,
         search_string: str = None

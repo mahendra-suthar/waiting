@@ -59,14 +59,24 @@ def insert_item(
 
 def get_item(
     collection_name: str = None,
-    item_id: str = None,
+    item_id: ObjectId = None,
+    filters: dict = None,
+    columns: list = None
 ) -> Any:
     try:
+        if not columns:
+            columns = []
+
         collection = client_db[collection_name]
         if not item_id:
             return error_response(status=status.HTTP_400_BAD_REQUEST, error="Item id not found")
 
-        result = collection.find_one({"_id": ObjectId(item_id), 'is_deleted': False})
+        filter_dict = {'is_deleted': False}
+        if filters:
+            filter_dict.update(filters)
+
+        query, projections = generate_mongo_query(filter_conditions=filter_dict, projection_fields=columns)
+        result = collection.find_one(query, {**projections})
         if result:
             result['_id'] = str(result['_id'])
             return success_response(data=result, status=status.HTTP_200_OK, message="Data get successfully")
@@ -102,15 +112,19 @@ def prepare_item_list(data_dict: dict) -> Any:
     page_size = data_dict.get('page_size', 10)
     search_string = data_dict.get('search_string', None)
     foreign_keys = data_dict.get("foreign_keys", {})
+    filters = data_dict.get('filters')
 
     collection = client_db[collection_name]
 
     # columns to show
-    column_list = list(schema.__annotations__.keys()) if schema else []
+    if not isinstance(schema, list):
+        schema = list(schema.__annotations__.keys()) if schema else []
 
     # preparing query using common function
     filter_conditions = {'is_deleted': False}
-    filter_query, projection = generate_mongo_query(filter_conditions, projection_fields=column_list)
+    if filters:
+        filter_conditions.update(**filters)
+    filter_query, projection = generate_mongo_query(filter_conditions, projection_fields=schema)
 
     # Foreign key data
     # if foreign_keys:

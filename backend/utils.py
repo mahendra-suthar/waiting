@@ -43,9 +43,9 @@ def temp_gen_otp_and_store(phone_number):
 
 def temp_verify_otp(phone_number, otp_code):
     try:
-        # otp = redis_client.get(phone_number)
+        otp = redis_client.get(phone_number)
         if int(otp_code):
-            # redis_client.delete(phone_number)
+            redis_client.delete(phone_number)
             return True
         else:
             return False
@@ -128,7 +128,6 @@ def prepare_dropdown_for_forms(collection_name: str, label: str, value: str):
         collection = database[collection_name]
         result = collection.find(query, projections)
         documents = [(str(doc[value]), doc[label]) for doc in result if doc.get(value)]
-        print("-------documents-------", documents)
         documents = [(None, 'Select Item...')] + documents
         return documents
     except Exception as error:

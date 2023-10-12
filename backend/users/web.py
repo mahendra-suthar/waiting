@@ -20,7 +20,6 @@ users_collection = 'users'
 async def users(request: Request) -> HTMLResponse:
     columns, data, name, table_name = jinja_variables_for_user()
     modify = True
-    print("------columns, data, name, table_name------", columns, data, name, table_name)
     return templates.TemplateResponse("admin/index.html", context=locals())
 
 

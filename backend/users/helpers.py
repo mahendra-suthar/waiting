@@ -54,7 +54,7 @@ def get_user_by_id(user_id: str) -> Any:
     """
     Update user
     """
-    is_user_exist = filter_data(user_collection, filter_dict={'_id': user_id})
+    is_user_exist = filter_data(user_collection, filter_dict={'_id': ObjectId(user_id)})
     if not is_user_exist:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found with this Id")
 

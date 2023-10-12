@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from .schema import SendOTP, VerifyOTP
 from models.users import User
 from logs import logger as log
-from .helpers import send_phone_otp, verify_phone_otp_and_login
+from .helpers import register_and_send_phone_otp, verify_phone_otp_and_login
 from ..utils import success_response
 
 router = APIRouter()
@@ -18,7 +18,7 @@ async def send_otp(send_otp_body: SendOTP = Body(...)):
     Send OTP using phone number
     """
     send_otp_data = jsonable_encoder(send_otp_body)
-    return_data = send_phone_otp(send_otp_data)
+    return_data = register_and_send_phone_otp(send_otp_data)
     return JSONResponse(content=return_data, status_code=201)
 
 

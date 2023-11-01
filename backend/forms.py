@@ -11,7 +11,8 @@ from wtforms import (
     BooleanField,
     TimeField,
     FieldList,
-    FormField
+    FormField,
+    FloatField
 )
 
 from wtforms.validators import DataRequired, Regexp, Email
@@ -19,7 +20,7 @@ from bson import ObjectId
 
 from .queries import filter_data
 from .utils import prepare_dropdown_for_forms, get_current_timestamp_utc, prepare_static_choice_dropdown
-from .constants import DEFAULT_COUNTRY_CODE, gender_choices, days_of_week_choices
+from .constants import DEFAULT_COUNTRY_CODE, gender_choices, days_of_week_choices, fee_type_choices
 
 category_collection = 'category'
 business_collection = 'business'
@@ -210,9 +211,15 @@ class EmployeeServiceForm(StarletteForm):
             label='email',
             value='_id'
         ))
+    service_fee = IntegerField("Service Fee")
+    # fee_type = SelectField(
+    #     "Fee Type",
+    #     choices=prepare_static_choice_dropdown(fee_type_choices)
+    # )
     description = TextAreaField("Description")
-    enqueue_time = IntegerField("Enqueue Time")
-    dequeue_time = IntegerField("Dequeue Time")
+    start_time = TimeField("Enqueue Time")
+    end_time = TimeField("Dequeue Time")
+    duration = IntegerField("Duration")
 
 
 class UsersForm(StarletteForm):

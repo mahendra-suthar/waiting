@@ -110,3 +110,12 @@ days_of_week_choices = (
     (SATURDAY, "Saturday"),
     (SUNDAY, "Sunday")
 )
+
+
+FLAT_FEE = 1
+HOURLY_FEE = 2
+
+fee_type_choices = (
+    (FLAT_FEE, "Flat Fee"),
+    (HOURLY_FEE, "Hourly Fee"),
+)

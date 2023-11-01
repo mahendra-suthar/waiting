@@ -3,7 +3,7 @@ from bson import ObjectId
 from typing import Any
 
 from config.database import client_db
-from ..queries import insert_item, update_item, get_item, get_item_list, filter_data, prepare_item_list
+from ..queries import insert_item, update_item, get_item, get_item_list, filter_data, prepare_item_list, generate_mongo_query
 from .schema import BusinessData
 from ..utils import success_response
 
@@ -70,7 +70,7 @@ async def update_business_request(business_id: str, business_dict: dict) -> Any:
     if is_phone_exist:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone Number already exist")
 
-    response_data = await update_item(collection_name='business', item_id=business_id, item_data=business_dict)
+    response_data = update_item(collection_name='business', item_id=business_id, item_data=business_dict)
     return response_data
 
 

@@ -135,6 +135,20 @@ def prepare_dropdown_for_forms(collection_name: str, label: str, value: str):
         return []
 
 
+def prepare_dropdown_data(collection_name: str, label: str, value: str):
+    from .queries import generate_mongo_query
+    try:
+        query, projections = generate_mongo_query({'is_deleted': False}, projection_fields=[label, value])
+        database = client_db
+        collection = database[collection_name]
+        result = collection.find(query, projections)
+        documents = [{'value': str(doc[value]), 'label': doc[label]} for doc in result if doc.get(value)]
+        return documents
+    except Exception as error:
+        log.error(f"Something went wrong during prepare_dropdown_data: {error}")
+        return []
+
+
 def prepare_static_choice_dropdown(choices):
     choice_list = [(int(value), label) for value, label in choices]
     choice_list = [(None, 'Select Item...')] + choice_list

@@ -13,6 +13,8 @@ class RegisterQueueUser(BaseModel):
     dequeue_time: int
     priority: bool = False
     status: int = QUEUE_USER_REGISTERED
+    service_id: str
+    employee_id: str
 
     class Config:
         from_attributes = True

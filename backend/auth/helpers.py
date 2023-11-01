@@ -10,8 +10,9 @@ from config.database import client_db
 from ..users.helpers import insert_user_request
 from config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..utils import success_response, temp_gen_otp_and_store, temp_verify_otp
-from ..queries import insert_item, update_item
+from ..queries import insert_item, update_item, filter_data
 
+collection_name = 'users'
 user_collection = client_db['users']
 # oauth2_scheme = OAuth2PasswordBearer(
 #     tokenUrl="api/v1/verify_otp"
@@ -25,8 +26,11 @@ def register_and_send_phone_otp(user):
     try:
         phone_number = user.get("phone_number", None)
         if phone_number:
-            # sent = generate_and_store_otp_secret(phone_number)
-            insert_item('users', item_data=user)
+            is_exist = filter_data(collection_name, {'is_deleted': False, 'phone_number': phone_number})
+            if not is_exist:
+                # sent = generate_and_store_otp_secret(phone_number)
+                insert_item('users', item_data=user)
+
             sent = temp_gen_otp_and_store(phone_number)
             if sent:
                 return success_response(message="Successfully send OTP")

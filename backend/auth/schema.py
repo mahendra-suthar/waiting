@@ -52,6 +52,7 @@ class SendOTP(BaseModel):
 
 
 class VerifyOTP(BaseModel):
+    country_code: str = DEFAULT_COUNTRY_CODE
     phone_number: str
     otp: int
 

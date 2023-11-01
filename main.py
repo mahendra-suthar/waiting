@@ -10,6 +10,7 @@ from backend.auth.api import router as auth_router
 from backend.employee.api import router as employee_router
 from backend.category.api import router as category_router
 # from backend.queue.api import router as queue_router
+from backend.queue_user.api import router as queue_user_router
 
 from backend.users.web import router as user_web_router
 from backend.employee.web import router as employee_web_router
@@ -41,7 +42,9 @@ app.include_router(business_router, prefix="/api", tags=['BUSINESS'])
 app.include_router(employee_router, prefix="/api", tags=['EMPLOYEE'])
 app.include_router(auth_router, prefix="/api", tags=['AUTH'])
 app.include_router(category_router, prefix="/api", tags=['CATEGORY'])
-app.include_router(queue_web_router, prefix="/web", tags=['QUEUE'])
+app.include_router(category_router, prefix="/api", tags=['CATEGORY'])
+app.include_router(queue_user_router, prefix="/api", tags=['QUEUE_USER'])
+# app.include_router(queue_web_router, prefix="/web", tags=['QUEUE'])
 
 app.include_router(user_web_router, prefix="/web", tags=['USER'])
 app.include_router(employee_web_router, prefix="/web", tags=['EMPLOYEE'])

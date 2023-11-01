@@ -134,6 +134,8 @@ def prepare_item_list(data_dict: dict) -> Any:
     #     result = sub_collection.find(filter_conditions, projection)
     #     sub_documents = {{str(doc['_id']): doc} for doc in result}
 
+    print("-------filter_query-------", filter_query)
+
     # preparing pagination data
     if page_number < 1 or page_size < 1:
         raise HTTPException(status_code=400, detail="Invalid page or page_size")

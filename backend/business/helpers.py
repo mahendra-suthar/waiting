@@ -114,7 +114,7 @@ def prepare_business_details_with_employee_queue(data_dict):
         category_id = business_details.get("category_id")
         if category_id:
             category_response = get_item(category_collection, category_id, None, columns=['name'])
-            category_details = category_response.get('data')
+            category_details = category_response.get('data', {})
 
         employee_list_dict = {
             'collection_name': employee_collection,

@@ -77,6 +77,11 @@ async def update_business_request(business_id: str, business_dict: dict) -> Any:
 def prepare_category_wise_business_list():
     pipeline = [
         {
+            "$match": {
+                "is_deleted": False
+            }
+        },
+        {
             "$group": {
                 "_id": "$category_id",
                 "businesses": {"$push": "$$ROOT"}
@@ -86,14 +91,21 @@ def prepare_category_wise_business_list():
     grouped_businesses = business_collection.aggregate(pipeline)
     query, projections = generate_mongo_query(filter_conditions={'is_deleted': False}, projection_fields=["_id", "name"])
     category_list = client_db[category_collection].find(query, projections)
-    category_dict = {str(category['_id']): category['name'] for category in category_list}
-
+    # category_dict = {str(category['_id']): category['name'] for category in category_list}
+    category_business_list = {str(group['_id']): [{**business, '_id': str(business['_id'])} for business in group["businesses"]] for group in grouped_businesses}
+    # business_groups = [
+    #     {
+    #         "category_id": str(group["category_id"]),
+    #         "category_name": category_dict.get(group['category_id']),
+    #         "businesses": [{**business, '_id': str(business['_id'])} for business in group["businesses"]]}
+    #     for group in grouped_businesses if group
+    # ]
     business_groups = [
         {
-            "category_id": str(group["_id"]),
-            "category_name": category_dict.get(group['_id']),
-            "businesses": [{**business, '_id': str(business['_id'])} for business in group["businesses"]]}
-        for group in grouped_businesses if group
+            "category_id": str(category['_id']),
+            "category_name": category['name'],
+            "businesses": category_business_list.get(str(category['_id']), [])}
+        for category in category_list if category
     ]
     return success_response(data=business_groups, message="Data get successfully")
 

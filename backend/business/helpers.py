@@ -119,10 +119,9 @@ def prepare_business_details_with_employee_queue(data_dict):
             collection_name=collection_name,
             item_id=ObjectId(business_id),
             filters={'_id': ObjectId(business_id)},
-            columns=['name', 'category_id', 'phone', 'email', 'country_code', "address_id"]
+            columns=['name', 'category_id', 'phone', 'email', 'country_code', "address_id", 'about_business', 'phone_number']
         )
-
-        business_details = business_response.get("data")
+        business_details = business_response.get("data", {})
         category_id = business_details.get("category_id")
         if category_id:
             category_response = get_item(category_collection, category_id, None, columns=['name'])

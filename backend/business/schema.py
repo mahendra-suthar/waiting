@@ -20,7 +20,7 @@ class RegisterBusiness(BaseModel):
     status: Optional[int] = BUSINESS_REGISTERED
     email_verify: bool = False
     phone_verify: bool = False
-
+    owner_id: str
 
     class Config:
         from_attributes = True

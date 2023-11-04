@@ -19,6 +19,9 @@ def filter_data(
     if not filter_dict:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="filter dict not found")
 
+    if not filter_dict.get('is_deleted'):
+        filter_dict['is_deleted'] = False
+
     result = collection.find_one(filter_dict)
     if result:
         return True

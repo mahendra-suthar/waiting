@@ -19,6 +19,7 @@ class RegisterEmployee(BaseModel):
     email_verify: bool = False
     phone_verify: bool = False
     status: int = EMPLOYEE_REGISTERED
+    user_id: str
 
     # @validator("country_code")
     # def validate_country_code(cls, value):

@@ -44,6 +44,10 @@ async def insert_business_request(business_dict: dict) -> str:
     if is_phone_exist:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Phone Number already exist")
 
+    owner_exist = filter_data(collection_name='users', filter_dict={'_id': ObjectId(business_dict.get("owner_id"))})
+    if not owner_exist:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Owner not found")
+
     res_data = insert_item(collection_name='business', item_data=business_dict)
     return res_data
 

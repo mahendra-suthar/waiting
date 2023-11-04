@@ -41,7 +41,8 @@ async def save_business_form(
     phone_number: str = Form(...),
     address_id: Optional[str] = Form(None),
     about_business: Optional[str] = Form(None),
-    category_id: str = Form(...)
+    category_id: str = Form(...),
+    owner_id: str = Form(...)
 ) -> Response:
     form = BusinessForm(request=request)
     form.name.data = name
@@ -52,6 +53,7 @@ async def save_business_form(
     form.address_id.data = address_id
     form.about_business.data = about_business
     form.category_id.data = category_id
+    form.owner_id.data = owner_id
 
     if await form.validate():
         business_data = RegisterBusiness(
@@ -63,7 +65,8 @@ async def save_business_form(
             address_id=address_id,
             about_business=about_business,
             category_id=category_id,
-            status=1
+            status=1,
+            owner_id=owner_id
         )
         business_data_dict = jsonable_encoder(business_data)
         insert_item(business_collection, business_data_dict)

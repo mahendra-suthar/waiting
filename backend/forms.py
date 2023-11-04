@@ -104,6 +104,13 @@ class BusinessForm(StarletteForm):
             label='name',
             value='_id'
         ))
+    owner_id = SelectField(
+        "Owner",
+        choices=prepare_dropdown_for_forms(
+            collection_name=users_collection,
+            label='full_name',
+            value='_id'
+        ))
 
     def validate_name(self, field):
         item_id = self.data.get("business_id")
@@ -152,6 +159,10 @@ class EmployeeForm(StarletteForm):
     phone_number = StringField(
         "Phone Number",
         validators=[DataRequired(), Regexp(phone_number_regex, message="Invalid phone number")]
+    )
+    user_id = SelectField(
+        "User Details",
+        choices=prepare_dropdown_for_forms(users_collection, 'full_name', '_id')
     )
     joined_date = IntegerField(
         "Joined Date",

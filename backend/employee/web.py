@@ -37,6 +37,7 @@ async def save_business_form(
     # password: str = Form(...),
     country_code: str = Form(...),
     phone_number: str = Form(...),
+    user_id: str = Form(...),
     joined_date: Optional[int] = Form(None),
     department_id: Optional[str] = Form(None),
     employee_number: Optional[int] = Form(None)
@@ -44,6 +45,7 @@ async def save_business_form(
     form = EmployeeForm(request=request)
     form.merchant_id.data = merchant_id
     form.email.data = email
+    form.user_id = user_id
     form.country_code.data = country_code
     form.phone_number.data = phone_number
     form.joined_date.data = joined_date
@@ -60,6 +62,7 @@ async def save_business_form(
             joined_date=joined_date,
             department_id=department_id,
             employee_number=employee_number,
+            user_id=user_id
         )
         data_dict = jsonable_encoder(item_data)
         insert_item(employee_collection, data_dict)

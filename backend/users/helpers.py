@@ -58,7 +58,7 @@ def get_user_by_id(user_id: str) -> Any:
     if not is_user_exist:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found with this Id")
 
-    response_data = get_item(user_collection, item_id=user_id)
+    response_data = get_item(collection_name=user_collection, item_id=user_id)
     return response_data
 
 

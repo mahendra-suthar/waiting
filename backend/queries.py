@@ -62,7 +62,7 @@ def insert_item(
 
 def get_item(
     collection_name: str = None,
-    item_id: ObjectId = None,
+    item_id: str = None,
     filters: dict = None,
     columns: list = None
 ) -> Any:
@@ -74,7 +74,7 @@ def get_item(
         if not item_id:
             return error_response(status=status.HTTP_400_BAD_REQUEST, error="Item id not found")
 
-        filter_dict = {'is_deleted': False}
+        filter_dict = {'is_deleted': False, '_id': ObjectId(item_id)}
         if filters:
             filter_dict.update(filters)
 

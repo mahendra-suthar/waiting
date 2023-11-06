@@ -23,7 +23,7 @@ class RegisterQueueUser(BaseModel):
 class UpdateQueueUser(BaseModel):
     user_id: str
     queue_id: str
-    enqueue_time: str
+    enqueue_time: int
     dequeue_time: int
     status: int
     priority: bool
@@ -33,7 +33,7 @@ class QueueUserData(BaseModel):
     _id: str
     user_id: str
     queue_id: str
-    enqueue_time: str
+    enqueue_time: int
     dequeue_time: int
     status: int
     priority: bool

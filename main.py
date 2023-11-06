@@ -11,6 +11,8 @@ from backend.employee.api import router as employee_router
 from backend.category.api import router as category_router
 # from backend.queue.api import router as queue_router
 from backend.queue_user.api import router as queue_user_router
+from backend.employee_service.api import router as employee_service_router
+from backend.service.api import router as service_router
 
 from backend.users.web import router as user_web_router
 from backend.employee.web import router as employee_web_router
@@ -20,7 +22,7 @@ from backend.queue.web import router as queue_web_router
 from backend.queue_user.web import router as queue_user_web_router
 from backend.service.web import router as service_web_router
 from backend.business_schedule.web import router as business_schedule_web_router
-from backend.employee_service.web import router as business_service_web_router
+from backend.employee_service.web import router as employee_service_web_router
 
 from backend.utils import error_response
 
@@ -44,7 +46,8 @@ app.include_router(auth_router, prefix="/api", tags=['AUTH'])
 app.include_router(category_router, prefix="/api", tags=['CATEGORY'])
 app.include_router(category_router, prefix="/api", tags=['CATEGORY'])
 app.include_router(queue_user_router, prefix="/api", tags=['QUEUE_USER'])
-# app.include_router(queue_web_router, prefix="/web", tags=['QUEUE'])
+app.include_router(employee_service_router, prefix="/api", tags=['EMPLOYEE_SERVICE'])
+app.include_router(service_router, prefix="/api", tags=['SERVICE'])
 
 app.include_router(user_web_router, prefix="/web", tags=['USER'])
 app.include_router(employee_web_router, prefix="/web", tags=['EMPLOYEE'])
@@ -54,7 +57,7 @@ app.include_router(queue_web_router, prefix="/web", tags=['QUEUE'])
 app.include_router(queue_user_web_router, prefix="/web", tags=['QUEUE_USER'])
 app.include_router(service_web_router, prefix="/web", tags=['SERVICE'])
 app.include_router(business_schedule_web_router, prefix="/web", tags=['BUSINESS_SCHEDULE'])
-app.include_router(business_service_web_router, prefix="/web", tags=['BUSINESS_SERVICE'])
+app.include_router(employee_service_web_router, prefix="/web", tags=['EMPLOYEE_SERVICE'])
 
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):

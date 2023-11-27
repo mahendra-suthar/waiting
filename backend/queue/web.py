@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 
 from .helpers import jinja_variables_for_queue
 from ..forms import QueueForm
-from .schema import RegisterQueue
+from .schema import RegisterQueue, UpdateQueue
 from ..queries import insert_item, update_item, delete_item, get_item
 
 router = APIRouter()
@@ -64,6 +64,32 @@ async def save_queue_form(
         )
 
     return templates.TemplateResponse("admin/create.html", context=locals())
+
+
+@router.put("/queue/update/{item_id}", response_class=HTMLResponse)
+def save_queue_update_form(
+    item_id: str,
+    name: str = Form(...),
+    limit: int = Form(...),
+    current_user: str = Form(...),
+    current_length: int = Form(...),
+    start_time: time = Form(...),
+    end_time: time = Form(...)
+) -> RedirectResponse:
+    queue_data = UpdateQueue(
+        name=name,
+        limit=limit,
+        current_user=current_user,
+        current_length=current_length,
+        start_time=start_time,
+        end_time=end_time
+    )
+
+    queue_data_dict = jsonable_encoder(queue_data)
+    update_item(queue_collection, item_id, queue_data_dict)
+    return RedirectResponse(
+        "/web/queue", status_code=302
+    )
 
 
 @router.get("/queue/delete/{item_id}", response_class=HTMLResponse)

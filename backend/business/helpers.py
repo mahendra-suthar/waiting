@@ -137,7 +137,7 @@ def prepare_business_details_with_employee_queue(data_dict):
 
         employee_list_dict = {
             'collection_name': employee_collection,
-            'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id'],
+            'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id', 'queue_id'],
             'filters': {'merchant_id': business_id}
         }
         employees_response = prepare_item_list(employee_list_dict)
@@ -145,8 +145,7 @@ def prepare_business_details_with_employee_queue(data_dict):
 
         queue_list_dict = {
             'collection_name': queue_collection,
-            'schema': ['employee_id', 'limit', 'status', 'current_length'],
-            'filters': {'merchant_id': business_id}
+            'schema': ['name', 'limit', 'status', 'current_length', 'current_user']
         }
         queue_response = prepare_item_list(queue_list_dict)
         queue_list = queue_response.get('data', [])
@@ -158,11 +157,11 @@ def prepare_business_details_with_employee_queue(data_dict):
         user_response = prepare_item_list(user_list_dict)
         user_list = user_response.get('data', [])
         user_dict = {user['_id']: {**user} for user in user_list if user}
-        queue_dict = {queue['employee_id']: {**queue} for queue in queue_list if queue.get('employee_id')}
+        queue_dict = {queue['_id']: {**queue} for queue in queue_list if queue}
 
         employee_list = [{
             **employee,
-            'queue': queue_dict.get(employee['_id'], {}),
+            'queue': queue_dict.get(employee['queue_id'], {}),
             'employee_details': user_dict.get(employee.get('user_id'), {})
         } for employee in employee_list if employee]
 

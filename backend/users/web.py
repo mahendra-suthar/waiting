@@ -23,14 +23,14 @@ async def users(request: Request) -> HTMLResponse:
     return templates.TemplateResponse("admin/index.html", context=locals())
 
 
-@router.get("/user/new", response_class=HTMLResponse)
+@router.get("/users/new", response_class=HTMLResponse)
 def show_add_users_form(request: Request) -> HTMLResponse:
     form = UsersForm(request)
     name = "User"
     return templates.TemplateResponse("admin/create.html", context=locals())
 
 
-@router.post("/user/new", response_class=HTMLResponse)
+@router.post("/users/new", response_class=HTMLResponse)
 async def save_users_form(
     request: Request,
     first_name: Optional[str] = Form(None),

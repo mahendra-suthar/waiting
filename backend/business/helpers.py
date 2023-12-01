@@ -6,6 +6,7 @@ from config.database import client_db
 from ..queries import insert_item, update_item, get_item, get_item_list, filter_data, prepare_item_list, generate_mongo_query
 from .schema import BusinessData
 from ..utils import success_response
+from ..constants import MERCHANT
 
 
 collection_name = 'business'
@@ -49,6 +50,9 @@ async def insert_business_request(business_dict: dict) -> str:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Owner not found")
 
     res_data = insert_item(collection_name='business', item_data=business_dict)
+    user_id = business_dict.get('owner_id')
+    if res_data and user_id:
+        update_item(user_collection, str(user_id), {'user_type': MERCHANT})
     return res_data
 
 

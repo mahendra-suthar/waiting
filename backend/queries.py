@@ -190,6 +190,37 @@ def update_item(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
 
 
+def update_items(
+    collection_name: str = None,
+    match_dict: dict = None,
+    update_dict: dict = None,
+    updated_by: str = None
+) -> dict:
+    try:
+        collection = client_db[collection_name]
+        if not match_dict:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="match dict not found")
+        if not update_dict:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Update data not found")
+
+        update_dict['updated_at'] = get_current_timestamp_utc()
+        update_dict['updated_by'] = updated_by
+        print("----match_dict, update_dict------", match_dict, update_dict)
+        result = collection.update_one(
+            match_dict,
+            {"$set": update_dict}
+        )
+
+        if result.modified_count == 1:
+            return success_response(status=status.HTTP_200_OK, message="Successfully updated data")
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item not found")
+
+    except Exception as error:
+        log.error(f"Error while updating a {collection_name} into the database: {str(error)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
+
+
 def delete_item(collection_name: str, item_id: str) -> bool:
     try:
         collection = client_db[collection_name]

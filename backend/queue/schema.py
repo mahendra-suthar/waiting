@@ -12,8 +12,8 @@ class RegisterQueue(BaseModel):
     # merchant_id: str
     # employee_id: str
     limit: int
-    current_user: str
-    current_length: int
+    current_user: str = None
+    current_length: int = 0
     start_time: time
     end_time: time
     status: int = QUEUE_REGISTERED

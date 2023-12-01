@@ -26,13 +26,6 @@ async def categories(request: Request) -> HTMLResponse:
     return templates.TemplateResponse("admin/index.html", context=locals())
 
 
-@router.get("/category/new", response_class=HTMLResponse)
-def show_add_category_form(request: Request) -> HTMLResponse:
-    form = CategoryForm(request)
-    name = "Category"
-    return templates.TemplateResponse("admin/create.html", context=locals())
-
-
 @router.get("/category/update/{item_id}", response_class=HTMLResponse)
 def show_category_update_form(request: Request, item_id: str) -> HTMLResponse:
     obj = get_item(collection_name='category', item_id=item_id)
@@ -45,6 +38,13 @@ def show_category_update_form(request: Request, item_id: str) -> HTMLResponse:
     form = CategoryForm(request=request, data=dict_data)
     name = "Category"
     return templates.TemplateResponse("admin/update.html", context=locals())
+
+
+@router.get("/category/new", response_class=HTMLResponse)
+def show_add_category_form(request: Request) -> HTMLResponse:
+    form = CategoryForm(request)
+    name = "Category"
+    return templates.TemplateResponse("admin/create.html", context=locals())
 
 
 @router.post("/category/new", response_class=HTMLResponse)
@@ -106,3 +106,38 @@ def save_category_update_form(item_id: str) -> RedirectResponse:
     return RedirectResponse(
         "/web/category", status_code=302
     )
+
+
+from fastapi import Depends
+
+
+# @router.get("/category/new", response_class=HTMLResponse)
+# def show_add_category_form(request: Request) -> HTMLResponse:
+#     form = CategoryForm(request)
+#     name = "Category"
+#     return templates.TemplateResponse("admin/create.html", context={"request": request, "form": form, "name": name})
+#
+#
+# @router.post("/category/new", response_class=HTMLResponse)
+# def save_category_form(
+#         request: Request,
+#         form: CategoryForm = Depends(CategoryForm),
+# ) -> Union[RedirectResponse, HTMLResponse]:
+#     if not form.validate():
+#         return templates.TemplateResponse("admin/create.html", context={"request": request, "form": form})
+#
+#     # Check if the category name already exists
+#     if filter_data(category_collection, {'name': form.name.data}):
+#         form.errors["name"] = ["Category Name already exists"]
+#         return templates.TemplateResponse("admin/create.html", context={"request": request, "form": form})
+#
+#     category_data = RegisterCategory(
+#         name=form.name.data,
+#         description=form.description.data,
+#         parent_category_id=form.parent_category_id.data,
+#     )
+#     category_data_dict = jsonable_encoder(category_data)
+#     insert_item(category_collection, category_data_dict)
+#
+#     return RedirectResponse("/web/category", status_code=302)
+#

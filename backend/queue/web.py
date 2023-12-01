@@ -34,16 +34,16 @@ def show_add_queue_form(request: Request) -> HTMLResponse:
 async def save_queue_form(
     request: Request,
     name: str = Form(...),
-    merchant_id: str = Form(...),
-    employee_id: str = Form(...),
+    # merchant_id: str = Form(...),
+    # employee_id: str = Form(...),
     limit: int = Form(...),
     start_time: time = Form(...),
     end_time: time = Form(...),
 ) -> Response:
     form = QueueForm(request=request)
     form.name.data = name
-    form.merchant_id.data = merchant_id
-    form.employee_id.data = employee_id
+    # form.merchant_id.data = merchant_id
+    # form.employee_id.data = employee_id
     form.limit.data = limit
     form.start_time.data = start_time
     form.end_time.data = end_time
@@ -51,8 +51,8 @@ async def save_queue_form(
     if await form.validate():
         item_data = RegisterQueue(
             name=name,
-            merchant_id=merchant_id,
-            employee_id=employee_id,
+            # merchant_id=merchant_id,
+            # employee_id=employee_id,
             limit=limit,
             start_time=start_time,
             end_time=end_time

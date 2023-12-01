@@ -9,10 +9,12 @@ from .helpers import jinja_variables_for_employees
 from ..forms import EmployeeForm
 from .schema import RegisterEmployee, UpdateEmployee
 from ..queries import insert_item, get_item, update_item, delete_item
+from ..constants import EMPLOYEE
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
 employee_collection = 'employee'
+user_collection = 'users'
 
 
 @router.get("/employee", response_class=HTMLResponse)
@@ -38,6 +40,7 @@ async def save_business_form(
     country_code: str = Form(...),
     phone_number: str = Form(...),
     user_id: str = Form(...),
+    queue_id: str = Form(...),
     joined_date: Optional[int] = Form(None),
     department_id: Optional[str] = Form(None),
     employee_number: Optional[int] = Form(None)
@@ -45,7 +48,8 @@ async def save_business_form(
     form = EmployeeForm(request=request)
     form.merchant_id.data = merchant_id
     form.email.data = email
-    form.user_id = user_id
+    form.user_id.data = user_id
+    form.queue_id.data = queue_id
     form.country_code.data = country_code
     form.phone_number.data = phone_number
     form.joined_date.data = joined_date
@@ -62,10 +66,13 @@ async def save_business_form(
             joined_date=joined_date,
             department_id=department_id,
             employee_number=employee_number,
-            user_id=user_id
+            user_id=user_id,
+            queue_id=queue_id
         )
         data_dict = jsonable_encoder(item_data)
-        insert_item(employee_collection, data_dict)
+        inserted_id = insert_item(employee_collection, data_dict)
+        if inserted_id and user_id:
+            update_item(user_collection, user_id, {'user_type': EMPLOYEE})
         return RedirectResponse(
             "/web/employee", status_code=302
         )

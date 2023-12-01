@@ -5,15 +5,19 @@ from fastapi.responses import HTMLResponse, Response, RedirectResponse
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
 
-from .helpers import jinja_variables_for_queue_user
+from .helpers import jinja_variables_for_queue_user, update_queue
 from ..forms import QueueUserForm
 from .schema import RegisterQueueUser, UpdateQueueUser
-from ..queries import insert_item, update_item, delete_item, get_item
+from ..queries import insert_item, update_item, delete_item, get_item, get_item_list, prepare_item_list
 from ..utils import get_current_timestamp_utc
+# from ..websocket import waiting_list_manager
+# from ..constants import QUEUE_USER_REGISTERED
+
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
 queue_user_collection = 'queue_user'
+queue_collection = 'queue'
 
 
 @router.get("/queue_user", response_class=HTMLResponse)
@@ -30,6 +34,39 @@ def show_add_queue_user_form(request: Request) -> HTMLResponse:
     return templates.TemplateResponse("admin/create.html", context=locals())
 
 
+# @router.post("/queue_user/new", response_class=HTMLResponse)
+# async def save_queue_form(
+#     request: Request,
+#     user_id: str = Form(...),
+#     queue_id: str = Form(...),
+#     priority: bool = Form(False),
+#     enqueue_time: Optional[int] = Form(0),
+#     dequeue_time: Optional[int] = Form(0),
+# ) -> Response:
+#     form = QueueUserForm(request=request)
+#     form.user_id.data = user_id
+#     form.queue_id.data = queue_id
+#     form.priority.data = priority
+#     form.enqueue_time.data = enqueue_time
+#     form.dequeue_time.data = dequeue_time
+#
+#     if await form.validate():
+#         item_data = RegisterQueueUser(
+#             user_id=user_id,
+#             queue_id=queue_id,
+#             priority=priority,
+#             enqueue_time=get_current_timestamp_utc(),
+#             dequeue_time=dequeue_time
+#         )
+#         data_dict = jsonable_encoder(item_data)
+#         insert_item(queue_user_collection, data_dict)
+#         return RedirectResponse(
+#             "/web/queue_user", status_code=302
+#         )
+#
+#     return templates.TemplateResponse("admin/create.html", context=locals())
+
+
 @router.post("/queue_user/new", response_class=HTMLResponse)
 async def save_queue_form(
     request: Request,
@@ -47,48 +84,20 @@ async def save_queue_form(
     form.dequeue_time.data = dequeue_time
 
     if await form.validate():
+
         item_data = RegisterQueueUser(
             user_id=user_id,
             queue_id=queue_id,
             priority=priority,
             enqueue_time=get_current_timestamp_utc(),
-            dequeue_time=dequeue_time
+            dequeue_time=dequeue_time,
+            service_id=None,
+            employee_id=None
         )
+        print("item_data", item_data)
         data_dict = jsonable_encoder(item_data)
-        insert_item(queue_user_collection, data_dict)
-        return RedirectResponse(
-            "/web/queue_user", status_code=302
-        )
-
-    return templates.TemplateResponse("admin/create.html", context=locals())
-
-
-@router.post("/queue_user/new", response_class=HTMLResponse)
-async def save_queue_form(
-    request: Request,
-    user_id: str = Form(...),
-    queue_id: str = Form(...),
-    priority: bool = Form(False),
-    enqueue_time: Optional[int] = Form(0),
-    dequeue_time: Optional[int] = Form(0),
-) -> Response:
-    form = QueueUserForm(request=request)
-    form.user_id.data = user_id
-    form.queue_id.data = queue_id
-    form.priority.data = priority
-    form.enqueue_time.data = enqueue_time
-    form.dequeue_time.data = dequeue_time
-
-    if await form.validate():
-        item_data = RegisterQueueUser(
-            user_id=user_id,
-            queue_id=queue_id,
-            priority=priority,
-            enqueue_time=get_current_timestamp_utc(),
-            dequeue_time=dequeue_time
-        )
-        data_dict = jsonable_encoder(item_data)
-        insert_item(queue_user_collection, data_dict)
+        inserted_id = insert_item(queue_user_collection, data_dict)
+        update_queue(str(user_id), queue_id)
         return RedirectResponse(
             "/web/queue_user", status_code=302
         )

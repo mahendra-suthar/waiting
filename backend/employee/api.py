@@ -7,10 +7,12 @@ from typing import Any
 
 from ..utils import success_response
 from .schema import RegisterEmployee, EmployeeData
-from ..queries import insert_item, prepare_item_list, filter_data
+from ..queries import insert_item, prepare_item_list, filter_data, update_item
+from ..constants import EMPLOYEE
 
 router = APIRouter()
 employee_collection = 'employee'
+user_collection = 'users'
 
 
 @router.post("/v1/employee", response_description="Add new Employee")
@@ -43,6 +45,8 @@ def create_employee(employee: RegisterEmployee = Body(...)) -> Any:
             raise HTTPException(status_code=400, detail="User not found")
 
     inserted_employee = insert_item(employee_collection, employee_data, )
+    if inserted_employee and user_id:
+        update_item(user_collection, str(user_id), {'user_type': EMPLOYEE})
     response_data = success_response(data={'employee_id': str(inserted_employee)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 

@@ -20,6 +20,7 @@ class RegisterEmployee(BaseModel):
     phone_verify: bool = False
     status: int = EMPLOYEE_REGISTERED
     user_id: str
+    queue_id: str
 
     # @validator("country_code")
     # def validate_country_code(cls, value):
@@ -58,6 +59,7 @@ class UpdateEmployee(BaseModel):
     country_code: constr(min_length=1, max_length=4)
     phone_number: constr(min_length=1, max_length=15)
     employee_number: int
+    queue_id: str
 
 
 class EmployeeData(BaseModel):
@@ -69,3 +71,4 @@ class EmployeeData(BaseModel):
     country_code: str
     phone_number: str
     employee_number: int
+    queue_id: str

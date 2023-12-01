@@ -10,10 +10,12 @@ from .helpers import jinja_variables_for_business
 from .schema import RegisterBusiness, UpdateBusiness
 from ..forms import BusinessForm, BusinessScheduleForm
 from ..queries import insert_item, get_item, update_item, delete_item
+from ..constants import MERCHANT
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
 business_collection = 'business'
+user_collection = 'users'
 
 
 @router.get("/business", response_class=HTMLResponse)
@@ -69,7 +71,9 @@ async def save_business_form(
             owner_id=owner_id
         )
         business_data_dict = jsonable_encoder(business_data)
-        insert_item(business_collection, business_data_dict)
+        inserted_id = insert_item(business_collection, business_data_dict)
+        if inserted_id and owner_id:
+            update_item(user_collection, owner_id, {'user_type': MERCHANT})
         return RedirectResponse(
             "/web/business", status_code=302
         )

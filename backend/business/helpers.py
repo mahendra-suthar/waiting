@@ -6,6 +6,7 @@ from config.database import client_db
 from ..queries import insert_item, update_item, get_item, get_item_list, filter_data, prepare_item_list, generate_mongo_query
 from .schema import BusinessData
 from ..utils import success_response
+from ..constants import MERCHANT
 
 
 collection_name = 'business'
@@ -49,6 +50,9 @@ async def insert_business_request(business_dict: dict) -> str:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Owner not found")
 
     res_data = insert_item(collection_name='business', item_data=business_dict)
+    user_id = business_dict.get('owner_id')
+    if res_data and user_id:
+        update_item(user_collection, str(user_id), {'user_type': MERCHANT})
     return res_data
 
 
@@ -121,7 +125,7 @@ def prepare_business_details_with_employee_queue(data_dict):
     if business_id:
         business_response = get_item(
             collection_name=collection_name,
-            item_id=ObjectId(business_id),
+            item_id=business_id,
             filters={'_id': ObjectId(business_id)},
             columns=['name', 'category_id', 'phone', 'email', 'country_code', "address_id", 'about_business', 'phone_number']
         )
@@ -133,7 +137,7 @@ def prepare_business_details_with_employee_queue(data_dict):
 
         employee_list_dict = {
             'collection_name': employee_collection,
-            'schema': ['email', 'phone_number', 'country_code', 'employee_number'],
+            'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id'],
             'filters': {'merchant_id': business_id}
         }
         employees_response = prepare_item_list(employee_list_dict)
@@ -149,21 +153,19 @@ def prepare_business_details_with_employee_queue(data_dict):
 
         user_list_dict = {
             'collection_name': user_collection,
-            'schema': ['employee_id', 'full_name'],
-            'filters': {'employee_id': {'$ne': None}}
+            'schema': ['employee_id', 'full_name']
         }
         user_response = prepare_item_list(user_list_dict)
         user_list = user_response.get('data', [])
-        user_dict = {user['employee_id']: {**user} for user in user_list if user and user.get('employee_id')}
-
+        user_dict = {user['_id']: {**user} for user in user_list if user}
         queue_dict = {queue['employee_id']: {**queue} for queue in queue_list if queue.get('employee_id')}
+
         employee_list = [{
             **employee,
             'queue': queue_dict.get(employee['_id'], {}),
-            'user': user_dict.get(employee['_id'], {})
-        } for employee in employee_list if employee and queue_dict.get(employee["_id"])]
+            'employee_details': user_dict.get(employee.get('user_id'), {})
+        } for employee in employee_list if employee]
 
-        print("=======[category_details]=========", category_details)
         category_name = category_details.get("name") if category_details else None
         business_details = {
             **business_details,

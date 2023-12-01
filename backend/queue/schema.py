@@ -9,9 +9,11 @@ employee_collection = 'queue'
 
 class RegisterQueue(BaseModel):
     name: str
-    merchant_id: str
-    employee_id: str
+    # merchant_id: str
+    # employee_id: str
     limit: int
+    current_user: str = None
+    current_length: int = 0
     start_time: time
     end_time: time
     status: int = QUEUE_REGISTERED
@@ -22,9 +24,11 @@ class RegisterQueue(BaseModel):
 
 class UpdateQueue(BaseModel):
     name: str
-    merchant_id: str
-    employee_id: str
+    # merchant_id: str
+    # employee_id: str
     limit: int
+    current_user: str
+    current_length: int
     start_time: int
     end_time: int
 
@@ -32,8 +36,10 @@ class UpdateQueue(BaseModel):
 class QueueData(BaseModel):
     _id: str
     name: str
-    merchant_id: str
-    employee_id: str
+    # merchant_id: str
+    # employee_id: str
     limit: int
+    current_user: str
+    current_length: int
     start_time: int
     end_time: int

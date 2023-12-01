@@ -32,4 +32,9 @@ secrets.ini
 secrets.yaml
 
 # Ignore backup files created by text editors
+#config/redis.py
+
+
+mongo-data
+Makefile
 config/redis.py

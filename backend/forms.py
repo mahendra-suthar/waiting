@@ -164,6 +164,10 @@ class EmployeeForm(StarletteForm):
         "User Details",
         choices=prepare_dropdown_for_forms(users_collection, 'full_name', '_id')
     )
+    queue_id = SelectField(
+        "Queue",
+        choices=prepare_dropdown_for_forms(queue_collection, 'name', '_id')
+    )
     joined_date = IntegerField(
         "Joined Date",
         default=get_current_timestamp_utc(),
@@ -281,22 +285,22 @@ class UsersForm(StarletteForm):
 class QueueForm(StarletteForm):
     queue_id = HiddenField("queue_id")
     name = StringField("Name", validators=[DataRequired()])
-    merchant_id = SelectField(
-        "Business",
-        validators=[DataRequired()],
-        choices=prepare_dropdown_for_forms(
-            collection_name=business_collection,
-            label='name',
-            value='_id'
-        ))
-    employee_id = SelectField(
-        "Employee",
-        validators=[DataRequired()],
-        choices=prepare_dropdown_for_forms(
-            collection_name=employee_collection,
-            label='email',
-            value='_id'
-        ))
+    # merchant_id = SelectField(
+    #     "Business",
+    #     validators=[DataRequired()],
+    #     choices=prepare_dropdown_for_forms(
+    #         collection_name=business_collection,
+    #         label='name',
+    #         value='_id'
+    #     ))
+    # employee_id = SelectField(
+    #     "Employee",
+    #     validators=[DataRequired()],
+    #     choices=prepare_dropdown_for_forms(
+    #         collection_name=employee_collection,
+    #         label='email',
+    #         value='_id'
+    #     ))
     limit = IntegerField("Limit", validators=[DataRequired()])
     start_time = TimeField("Start Time", validators=[DataRequired()])
     end_time = TimeField("End Time", validators=[DataRequired()])

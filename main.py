@@ -13,6 +13,7 @@ from backend.category.api import router as category_router
 from backend.queue_user.api import router as queue_user_router
 from backend.employee_service.api import router as employee_service_router
 from backend.service.api import router as service_router
+from backend.websocket import router as websocket_router
 
 from backend.users.web import router as user_web_router
 from backend.employee.web import router as employee_web_router
@@ -48,6 +49,7 @@ app.include_router(category_router, prefix="/api", tags=['CATEGORY'])
 app.include_router(queue_user_router, prefix="/api", tags=['QUEUE_USER'])
 app.include_router(employee_service_router, prefix="/api", tags=['EMPLOYEE_SERVICE'])
 app.include_router(service_router, prefix="/api", tags=['SERVICE'])
+app.include_router(websocket_router, prefix="", tags=['WEBSOCKET'])
 
 app.include_router(user_web_router, prefix="/web", tags=['USER'])
 app.include_router(employee_web_router, prefix="/web", tags=['EMPLOYEE'])

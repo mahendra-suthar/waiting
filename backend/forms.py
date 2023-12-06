@@ -99,11 +99,7 @@ class BusinessForm(StarletteForm):
     # description = StringField("Description")
     category_id = SelectField(
         "Category",
-        choices=prepare_dropdown_for_forms(
-            collection_name=category_collection,
-            label='name',
-            value='_id'
-        ))
+        choices=[])
     owner_id = SelectField(
         "Owner",
         choices=prepare_dropdown_for_forms(

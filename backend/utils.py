@@ -34,7 +34,8 @@ def generate_otp():
 
 def temp_gen_otp_and_store(phone_number):
     try:
-        redis_client.setex(phone_number, 30, 123456)
+        # redis_client.setex(phone_number, 30, 123456)
+        otp = 123456
     except Exception as e:
         log.error(f"Error while store OTP: {e}")
         return False
@@ -43,9 +44,10 @@ def temp_gen_otp_and_store(phone_number):
 
 def temp_verify_otp(phone_number, otp_code):
     try:
-        otp = redis_client.get(phone_number)
+        # otp = redis_client.get(phone_number)
+
         if int(otp_code):
-            redis_client.delete(phone_number)
+            # redis_client.delete(phone_number)
             return True
         else:
             return False

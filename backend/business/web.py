@@ -11,11 +11,13 @@ from .schema import RegisterBusiness, UpdateBusiness
 from ..forms import BusinessForm, BusinessScheduleForm
 from ..queries import insert_item, get_item, update_item, delete_item
 from ..constants import MERCHANT
+from ..utils import prepare_dropdown_for_forms
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
 business_collection = 'business'
 user_collection = 'users'
+category_collection = 'category'
 
 
 @router.get("/business", response_class=HTMLResponse)
@@ -28,6 +30,11 @@ async def users(request: Request) -> HTMLResponse:
 @router.get("/business/new", response_class=HTMLResponse)
 def show_add_business_form(request: Request) -> HTMLResponse:
     form = BusinessForm(request)
+    form.category_id.choices = prepare_dropdown_for_forms(
+            collection_name=category_collection,
+            label='name',
+            value='_id'
+        )
     # form = BusinessScheduleForm(request)
     name = "Business"
     return templates.TemplateResponse("admin/create.html", context=locals())

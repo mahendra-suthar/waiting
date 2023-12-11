@@ -1,14 +1,16 @@
 from bson import ObjectId, errors
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from fastapi import Body, HTTPException
+from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
 
 from ..utils import success_response
 from .schema import RegisterEmployee, EmployeeData
-from ..queries import insert_item, prepare_item_list, filter_data, update_item
+from ..queries import insert_item, prepare_item_list, filter_data, update_item, get_item
 from ..constants import EMPLOYEE
+from ..auth.helpers import JWTBearer
+from .helpers import prepare_employee_queue_history
 
 router = APIRouter()
 employee_collection = 'employee'
@@ -70,6 +72,21 @@ async def get_employees(
     response_data = prepare_item_list(data_dict)
     status_code = response_data.get("status")
     return JSONResponse(content=response_data, status_code=status_code)
+
+
+@router.post("/v1/employee_queue", response_description="Employee's queue details")
+def current_users_appointments(current_user: str = Depends(JWTBearer())) -> Any:
+    """
+    Preparing employee's queue details
+    """
+    employee_list = prepare_item_list({
+        'collection_name': 'employee',
+        'schema': ['user_id', 'queue_id'],
+        'filters': {'is_deleted': False, 'user_id': current_user}
+    })
+    data_dict = prepare_employee_queue_history(employee_list.get('data', [])[0])
+    response_data = success_response(data=data_dict['data'], message="Successfully get data")
+    return JSONResponse(content=response_data, status_code=201)
 
 # @router.put("/v1/employee", response_description="Update Employee")
 # def create_employee(employee: RegisterEmployee = Body(...)) -> Any:

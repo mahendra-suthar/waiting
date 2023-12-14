@@ -9,10 +9,12 @@ from .helpers import jinja_variables_for_service
 from ..forms import ServiceForm
 from .schema import RegisterService
 from ..queries import insert_item, update_item, delete_item, get_item
+from ..utils import prepare_dropdown_for_forms
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
 service_collection = 'service'
+business_collection = 'business'
 
 
 @router.get("/service", response_class=HTMLResponse)
@@ -25,6 +27,7 @@ async def get_service(request: Request) -> HTMLResponse:
 @router.get("/service/new", response_class=HTMLResponse)
 def show_add_service_form(request: Request) -> HTMLResponse:
     form = ServiceForm(request)
+    form.merchant_id.choices = prepare_dropdown_for_forms(collection_name=business_collection, label='name', value='_id')
     name = "Service"
     return templates.TemplateResponse("admin/create.html", context=locals())
 
@@ -37,6 +40,7 @@ async def save_queue_form(
     description: Optional[str] = Form('')
 ) -> Response:
     form = ServiceForm(request=request)
+    form.merchant_id.choices = prepare_dropdown_for_forms(collection_name=business_collection, label='name', value='_id')
     form.name.data = name
     form.merchant_id.data = merchant_id
     form.description.data = description

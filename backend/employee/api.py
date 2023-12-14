@@ -3,14 +3,14 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
-from typing import Any
+from typing import Any, Optional
 
 from ..utils import success_response
 from .schema import RegisterEmployee, EmployeeData
 from ..queries import insert_item, prepare_item_list, filter_data, update_item, get_item
 from ..constants import EMPLOYEE
 from ..auth.helpers import JWTBearer
-from .helpers import prepare_employee_queue_history
+from .helpers import prepare_employee_queue_history, prepare_employee_queue_history_as_per_status
 
 router = APIRouter()
 employee_collection = 'employee'
@@ -74,8 +74,24 @@ async def get_employees(
     return JSONResponse(content=response_data, status_code=status_code)
 
 
-@router.post("/v1/employee_queue", response_description="Employee's queue details")
-def current_users_appointments(current_user: str = Depends(JWTBearer())) -> Any:
+# @router.get("/v1/employee_queue", response_description="Employee's queue details")
+# def current_users_appointments(current_user: str = Depends(JWTBearer())) -> Any:
+#     """
+#     Preparing employee's queue details
+#     """
+#     employee_list = prepare_item_list({
+#         'collection_name': 'employee',
+#         'schema': ['user_id', 'queue_id'],
+#         'filters': {'is_deleted': False, 'user_id': current_user}
+#     })
+#     print("------employee_list------", employee_list)
+#     data_dict = prepare_employee_queue_history(employee_list.get('data', [])[0])
+#     response_data = success_response(data=data_dict['data'], message="Successfully get data")
+#     return JSONResponse(content=response_data, status_code=201)
+
+
+@router.get("/v1/employee_queue_appointments", response_description="Get queue user as per status")
+def current_users_appointments(status: Optional[int], current_user: str = Depends(JWTBearer())) -> Any:
     """
     Preparing employee's queue details
     """
@@ -84,7 +100,13 @@ def current_users_appointments(current_user: str = Depends(JWTBearer())) -> Any:
         'schema': ['user_id', 'queue_id'],
         'filters': {'is_deleted': False, 'user_id': current_user}
     })
-    data_dict = prepare_employee_queue_history(employee_list.get('data', [])[0])
+    print("--------employee_list--------", employee_list)
+    employee_details = employee_list.get('data', [])[0] if len(employee_list.get('data', [])) > 0 else {}
+    data_dict = {
+        'queue_id': employee_details.get('queue_id'),
+        'status': status
+    }
+    data_dict = prepare_employee_queue_history_as_per_status(data_dict)
     response_data = success_response(data=data_dict['data'], message="Successfully get data")
     return JSONResponse(content=response_data, status_code=201)
 

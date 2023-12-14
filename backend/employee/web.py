@@ -10,11 +10,15 @@ from ..forms import EmployeeForm
 from .schema import RegisterEmployee, UpdateEmployee
 from ..queries import insert_item, get_item, update_item, delete_item
 from ..constants import EMPLOYEE
+from ..utils import prepare_dropdown_for_forms
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
 employee_collection = 'employee'
 user_collection = 'users'
+business_collection = 'business'
+users_collection = 'users'
+queue_collection = 'queue'
 
 
 @router.get("/employee", response_class=HTMLResponse)
@@ -27,6 +31,9 @@ async def users(request: Request) -> HTMLResponse:
 @router.get("/employee/new", response_class=HTMLResponse)
 def show_add_employee_form(request: Request) -> HTMLResponse:
     form = EmployeeForm(request)
+    form.merchant_id.choices = prepare_dropdown_for_forms(business_collection, 'name', '_id')
+    form.user_id.choices = prepare_dropdown_for_forms(users_collection, 'full_name', '_id')
+    form.queue_id.choices = prepare_dropdown_for_forms(queue_collection, 'name', '_id')
     name = "Employee"
     return templates.TemplateResponse("admin/create.html", context=locals())
 
@@ -46,6 +53,9 @@ async def save_business_form(
     employee_number: Optional[int] = Form(None)
 ) -> Response:
     form = EmployeeForm(request=request)
+    form.merchant_id.choices = prepare_dropdown_for_forms(business_collection, 'name', '_id')
+    form.user_id.choices = prepare_dropdown_for_forms(users_collection, 'full_name', '_id')
+    form.queue_id.choices = prepare_dropdown_for_forms(queue_collection, 'name', '_id')
     form.merchant_id.data = merchant_id
     form.email.data = email
     form.user_id.data = user_id

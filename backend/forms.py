@@ -144,7 +144,7 @@ class EmployeeForm(StarletteForm):
     employee_id = HiddenField("employee_id")
     merchant_id = SelectField(
         "Business",
-        choices=prepare_dropdown_for_forms(business_collection, 'name', '_id')
+        choices=[]
     )
     email = EmailField("Email", validators=[DataRequired(), Email()])
     country_code = StringField(
@@ -158,11 +158,11 @@ class EmployeeForm(StarletteForm):
     )
     user_id = SelectField(
         "User Details",
-        choices=prepare_dropdown_for_forms(users_collection, 'full_name', '_id')
+        choices=[]
     )
     queue_id = SelectField(
         "Queue",
-        choices=prepare_dropdown_for_forms(queue_collection, 'name', '_id')
+        choices=[]
     )
     joined_date = IntegerField(
         "Joined Date",
@@ -209,19 +209,13 @@ class EmployeeServiceForm(StarletteForm):
     service_id = SelectField(
         "Service",
         validators=[DataRequired()],
-        choices=prepare_dropdown_for_forms(
-            collection_name=service_collection,
-            label='name',
-            value='_id'
-        ))
+        choices=[]
+    )
     employee_id = SelectField(
         "Employee",
         validators=[DataRequired()],
-        choices=prepare_dropdown_for_forms(
-            collection_name=employee_collection,
-            label='email',
-            value='_id'
-        ))
+        choices=[]
+    )
     service_fee = IntegerField("Service Fee")
     # fee_type = SelectField(
     #     "Fee Type",
@@ -331,11 +325,8 @@ class ServiceForm(StarletteForm):
     merchant_id = SelectField(
         "Business",
         validators=[DataRequired()],
-        choices=prepare_dropdown_for_forms(
-            collection_name=business_collection,
-            label='name',
-            value='_id'
-        ))
+        choices=[]
+    )
     description = StringField("Description")
 
     def validate_name(self, field):

@@ -12,6 +12,7 @@ queue_collection = 'queue'
 employee_collection = 'employee'
 business_collection = 'business'
 user_collection = 'users'
+category_collection = 'category'
 
 
 def jinja_variables_for_queue_user():
@@ -113,22 +114,36 @@ def get_business_employee_by_queue():
 
     business_list_dict = {
         'collection_name': business_collection,
-        'schema': ['name', 'email', 'phone_number', 'country_code', 'owner_id'],
+        'schema': ['name', 'email', 'phone_number', 'country_code', 'owner_id', 'category_id'],
     }
     business_response = prepare_item_list(business_list_dict)
     business_list = business_response.get('data', [])
 
+    category_list_dict = {
+        'collection_name': category_collection,
+        'schema': ['name', 'description'],
+    }
+    category_response = prepare_item_list(category_list_dict)
+    category_list = category_response.get('data', [])
+
     business_dict = {business['_id']: {**business} for business in business_list if business}
     user_dict = {user['_id']: {**user} for user in user_list if user}
+    category_dict = {category['_id']: {**category} for category in category_list if category}
 
     queue_dict = {}
     for employee in employee_list:
         if employee and employee['queue_id']:
+            print("-------business_dict--------", business_dict)
+            print("-------employee['merchant_id']--------", employee['merchant_id'])
             business_details = business_dict[employee['merchant_id']]
+            print("-------business_details--------", business_details)
+            business_category = category_dict.get(business_details['category_id'])
+            print("-------business_category--------", business_details['category_id'], category_dict, business_category)
             queue_dict[employee['queue_id']] = {
                 'business_name': business_details['name'],
                 'business_phone': f"{business_details['country_code']}-{business_details['phone_number']}",
                 'business_email': business_details['email'],
+                'business_category': business_category['name'],
                 'employee_phone': f"{employee['country_code']}-{employee['phone_number']}",
                 'employee_name': user_dict.get(employee['user_id'], None)
             }
@@ -138,6 +153,7 @@ def get_business_employee_by_queue():
 
 def prepare_appointments_history(user_id: str):
     final_list = []
+
     if user_id:
         position_of_queue_user = 0
         pipeline = [
@@ -163,13 +179,15 @@ def prepare_appointments_history(user_id: str):
             data_dict['queue_user_details'] = []
             for queue_user in group['queue_user']:
                 queue_id = queue_user['queue_id']
-                queue_user['_id'] = str(queue_user['_id'])
-                queue_user['queue_details'] = business_dict[queue_id]
                 waiting_list = waiting_list_manager.get_waiting_list(queue_id)
-                if waiting_list:
-                    position_of_queue_user = waiting_list.index(user_id)
-                queue_user['current_position'] = position_of_queue_user
-                data_dict['queue_user_details'].append(queue_user)
-            final_list.append(data_dict)
+                queue_users_dict = {
+                    'id': str(queue_user['_id']),
+                    'current_length': len(waiting_list),
+                    'queue_details': business_dict[queue_id]
+                }
+                if waiting_list and user_id in waiting_list:
+                    queue_users_dict['place_in_queue'] = waiting_list.index(user_id)
 
+                data_dict['queue_user_details'].append(queue_users_dict)
+            final_list.append(data_dict)
     return {'data': final_list}

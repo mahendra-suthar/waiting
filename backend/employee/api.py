@@ -15,6 +15,8 @@ from .helpers import prepare_employee_queue_history, prepare_employee_queue_hist
 router = APIRouter()
 employee_collection = 'employee'
 user_collection = 'users'
+business_collection = 'business'
+queue_collection = 'queue'
 
 
 @router.post("/v1/employee", response_description="Add new Employee")
@@ -109,6 +111,49 @@ def current_users_appointments(status: Optional[int], current_user: str = Depend
     data_dict = prepare_employee_queue_history_as_per_status(data_dict)
     response_data = success_response(data=data_dict['data'], message="Successfully get data")
     return JSONResponse(content=response_data, status_code=201)
+
+
+@router.get("/v1/employee/{employee_id}", response_description="Get employee")
+def get_employee_details(employee_id: str) -> Any:
+    """
+    Get employee details
+    """
+    response_data = get_item(
+        collection_name=employee_collection,
+        item_id=employee_id,
+        columns=['merchant_id', 'joined_date', 'email', 'country_code', 'phone_number', 'status', 'user_id', 'queue_id']
+    )
+    status_code = response_data.get("status")
+    data = response_data.get("data")
+    merchant_id = data.get("merchant_id")
+    # user_id = data.get("user_id")
+    queue_id = data.get("queue_id")
+    if merchant_id:
+        merchant_data = get_item(
+            collection_name=business_collection,
+            item_id=merchant_id,
+            columns=['name', 'email', 'country_code', 'phone_number', 'status', 'category_id', 'owner_id']
+        )
+        data['business_details'] = merchant_data.get("data")
+
+    # if user_id:
+    #     user_data = get_item(
+    #         collection_name=user_collection,
+    #         item_id=user_id,
+    #         columns=['full_name', 'email', 'country_code', 'phone_number', 'status', 'user_type']
+    #     )
+    #     data['user_details'] = user_data.get("data")
+
+    if queue_id:
+        queue_data = get_item(
+            collection_name=queue_collection,
+            item_id=queue_id,
+            columns=['name', 'limit', 'current_user', 'current_length', 'status']
+        )
+        data['queue_details'] = queue_data.get('data')
+
+    response_data['data'] = data
+    return JSONResponse(content=response_data, status_code=status_code)
 
 # @router.put("/v1/employee", response_description="Update Employee")
 # def create_employee(employee: RegisterEmployee = Body(...)) -> Any:

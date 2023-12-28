@@ -8,10 +8,11 @@ from ..utils import success_response
 from .schema import RegisterBusiness, UpdateBusiness, BusinessData
 from .helpers import (insert_business_request, update_business_request, prepare_category_wise_business_list,
                       prepare_business_details_with_employee_queue)
-from ..queries import prepare_item_list
+from ..queries import prepare_item_list, get_item
 
 router = APIRouter()
 business_collection = 'business'
+category_collection = 'category'
 
 
 @router.post("/v1/business", response_description="Add new Business")
@@ -77,4 +78,27 @@ def get_category_wise_business_list(business_id: str) -> Any:
     }
     response_data = prepare_business_details_with_employee_queue(data_dict)
     status_code = response_data.get("status")
+    return JSONResponse(content=response_data, status_code=status_code)
+
+
+@router.get("/v1/business/{business_id}", response_description="Get Business")
+def get_business_details(business_id: str) -> Any:
+    """
+    Get business details
+    """
+    response_data = get_item(
+        collection_name=business_collection,
+        item_id=business_id,
+        columns=['name', 'email', 'country_code', 'phone_number', 'status', 'category_id', 'owner_id', 'about_business']
+    )
+    status_code = response_data.get("status")
+    data = response_data.get("data")
+    category_id = data.get("category_id")
+    if category_id:
+        category_data = get_item(
+            collection_name=category_collection,
+            item_id=category_id,
+            columns=['name', 'description']
+        )
+        data['category_details'] = category_data.get("data")
     return JSONResponse(content=response_data, status_code=status_code)

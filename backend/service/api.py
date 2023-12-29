@@ -5,10 +5,11 @@ from typing import Any
 
 from ..utils import success_response, prepare_dropdown_data
 from .schema import RegisterService, ServiceData
-from ..queries import insert_item, prepare_item_list
+from ..queries import insert_item, prepare_item_list, get_item_list
 
 router = APIRouter()
 service_collection = 'service'
+business_collection = 'business'
 
 
 @router.post("/v1/service", response_description="Add new Business Service")
@@ -37,9 +38,17 @@ def get_service(
         'page_size': page_size,
         'search_string': search_string
     }
-    response_data = prepare_item_list(data_dict)
-    status_code = response_data.get("status")
-    return JSONResponse(content=response_data, status_code=status_code)
+    service_data = prepare_item_list(data_dict)
+    data_list = service_data.get('data', [])
+    business_data = get_item_list(collection_name=business_collection, columns=['name'])
+    business_data_list = business_data.get('data', [])
+    business_dict = {business['_id']: business['name'] for business in business_data_list if business}
+    for data in data_list:
+        data['business'] = business_dict[data['merchant_id']]
+
+    status_code = service_data.get("status")
+    service_data['data'] = data_list
+    return JSONResponse(content=service_data, status_code=status_code)
 
 
 @router.get("/v1/service_dropdown_data",

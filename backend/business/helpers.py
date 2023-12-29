@@ -6,7 +6,7 @@ from config.database import client_db
 from ..queries import insert_item, update_item, get_item, get_item_list, filter_data, prepare_item_list, generate_mongo_query
 from .schema import BusinessData
 from ..utils import success_response
-from ..constants import MERCHANT
+from ..constants import MERCHANT, business_status_choices
 
 
 collection_name = 'business'
@@ -22,8 +22,20 @@ def jinja_variables_for_business():
         'collection_name': collection_name,
         'schema': BusinessData
     }
-    columns = list(BusinessData.__annotations__.keys())
+    columns = list(BusinessData.__annotations__.keys()) + ['category']
     data = prepare_item_list(data_dict)
+
+    category_data = get_item_list(collection_name=category_collection, columns=['name'])
+    category_data_list = category_data.get('data', [])
+    category_data_dict = {category['_id']: category['name'] for category in category_data_list if category}
+    for item in data['data']:
+        item['category'] = category_data_dict.get(item['category_id'])
+
+    status_dict = dict(business_status_choices)
+    for item in data['data']:
+        item['status'] = status_dict.get(item['status'])
+
+    columns.remove('category_id')
     table_name = collection_name
     name = 'Business'
     return columns, data, name, table_name

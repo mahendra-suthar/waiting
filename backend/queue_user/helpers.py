@@ -2,7 +2,7 @@ from logs import logger as log
 from fastapi import HTTPException
 
 from .schema import QueueUserData
-from ..queries import prepare_item_list, filter_data, get_item, update_item, update_items, generate_mongo_query
+from ..queries import prepare_item_list, get_item_list, get_item, update_item, update_items, generate_mongo_query
 from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS, queue_user_status_choices
 from ..websocket import waiting_list_manager
 from config.database import client_db
@@ -20,8 +20,27 @@ def jinja_variables_for_queue_user():
         'collection_name': queue_user_collection,
         'schema': QueueUserData
     }
-    columns = list(QueueUserData.__annotations__.keys())
+    columns = list(QueueUserData.__annotations__.keys()) + ['queue', 'user']
     data = prepare_item_list(data_dict)
+
+    user_data = get_item_list(collection_name=user_collection, columns=['full_name'])
+    user_data_list = user_data.get('data', [])
+    user_data_dict = {user['_id']: user['full_name'] for user in user_data_list if user}
+    for item in data['data']:
+        item['user'] = user_data_dict.get(item['user_id'])
+
+    queue_data = get_item_list(collection_name=queue_collection, columns=['name'])
+    queue_data_list = queue_data.get('data', [])
+    queue_data_dict = {queue['_id']: queue['name'] for queue in queue_data_list if queue}
+    for item in data['data']:
+        item['queue'] = queue_data_dict.get(item['queue_id'])
+
+    status_dict = dict(queue_user_status_choices)
+    for item in data['data']:
+        item['status'] = status_dict.get(item['status'])
+
+    columns.remove('user_id')
+    columns.remove('queue_id')
     table_name = queue_user_collection
     name = 'Queue User'
     return columns, data, name, table_name
@@ -64,12 +83,11 @@ def update_queue(user_id, queue_id):
         }
         current_length = len(prepare_item_list(data_dict).get('data'))
         data_dict = {'current_length': current_length}
-        if current_length <= 1:
-            data_dict['current_user'] = str(user_id)
+        # if current_length <= 1:
+        #     data_dict['current_user'] = str(user_id)
         update_item(queue_collection, queue_id, data_dict)
         waiting_list_manager.load_waiting_list_from_volume()
         waiting_list_manager.add_customer(queue_id, str(user_id))
-        print("---------waliting list---------", waiting_list_manager.get_waiting_list(queue_id))
 
 
 def prepare_next_user(queue_id):

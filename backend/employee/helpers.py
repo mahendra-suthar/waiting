@@ -1,12 +1,14 @@
 from .schema import EmployeeData
 from config.database import client_db
-from ..queries import prepare_item_list
-from ..constants import queue_user_status_choices
+from ..queries import prepare_item_list, get_item_list
+from ..constants import queue_user_status_choices, employee_status_choices
 from ..websocket import waiting_list_manager
 
 employee_collection = 'employee'
 queue_user_collection = 'queue_user'
+queue_collection = 'queue'
 user_collection = 'users'
+business_collection = 'business'
 
 
 def jinja_variables_for_employees():
@@ -14,9 +16,27 @@ def jinja_variables_for_employees():
         'collection_name': employee_collection,
         'schema': EmployeeData
     }
-    columns = list(EmployeeData.__annotations__.keys())
-
+    columns = list(EmployeeData.__annotations__.keys()) + ['business', 'queue']
     data = prepare_item_list(data_dict)
+
+    business_data = get_item_list(collection_name=business_collection, columns=['name'])
+    business_data_list = business_data.get('data', [])
+    business_dict = {business['_id']: business['name'] for business in business_data_list if business}
+    for item in data['data']:
+        item['business'] = business_dict.get(item['merchant_id'])
+
+    queue_data = get_item_list(collection_name=queue_collection, columns=['name'])
+    queue_data_list = queue_data.get('data', [])
+    queue_data_dict = {queue['_id']: queue['name'] for queue in queue_data_list if queue}
+    for item in data['data']:
+        item['queue'] = queue_data_dict.get(item['queue_id'])
+
+    status_dict = dict(employee_status_choices)
+    for item in data['data']:
+        item['status'] = status_dict.get(item['status'])
+
+    columns.remove('merchant_id')
+    columns.remove('queue_id')
     table_name = employee_collection
     name = 'Employee'
     return columns, data, name, table_name

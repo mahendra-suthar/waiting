@@ -4,6 +4,7 @@ from typing import Any
 
 from ..queries import insert_item, update_item, get_item, get_item_list, filter_data, prepare_item_list
 from .schema import UserData
+from ..constants import user_type, gender_choices
 
 user_collection = 'users'
 
@@ -77,6 +78,15 @@ def jinja_variables_for_user():
     }
     columns = list(UserData.__annotations__.keys())
     data = prepare_item_list(data_dict)
+
+    user_type_dict = dict(user_type)
+    for item in data['data']:
+        item['user_type'] = user_type_dict.get(item['user_type'])
+
+    gender_dict = dict(gender_choices)
+    for item in data['data']:
+        item['gender'] = gender_dict.get(item['gender'])
+
     table_name = user_collection
     name = 'User'
     return columns, data, name, table_name

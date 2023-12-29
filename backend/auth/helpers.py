@@ -11,9 +11,12 @@ from ..users.helpers import insert_user_request
 from config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..utils import success_response, temp_gen_otp_and_store, temp_verify_otp
 from ..queries import insert_item, update_item, filter_data
+from ..constants import MERCHANT, EMPLOYEE
 
 collection_name = 'users'
 user_collection = client_db['users']
+business_collection = client_db['business']
+employee_collection = client_db['employee']
 # oauth2_scheme = OAuth2PasswordBearer(
 #     tokenUrl="api/v1/verify_otp"
 # )
@@ -60,6 +63,16 @@ def verify_phone_otp_and_login(user):
                     user_id = str(user_obj['_id'])
 
                 user_obj['_id'] = user_id
+                if user_obj['user_type']:
+                    if user_obj['user_type'] == MERCHANT:
+                        business_obj = business_collection.find_one({'owner_id': user_id})
+                        if business_obj:
+                            user_obj['business_id'] = str(business_obj['_id'])
+                    if user_obj['user_type'] == EMPLOYEE:
+                        employee_obj = employee_collection.find_one({'user_id': user_id})
+                        if employee_obj:
+                            user_obj['employee_id'] = str(employee_obj['_id'])
+
                 token = create_jwt_token(user_id)
                 return_data = {
                     'token': token,

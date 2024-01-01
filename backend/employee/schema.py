@@ -72,3 +72,4 @@ class EmployeeData(BaseModel):
     phone_number: str
     employee_number: int
     queue_id: str
+    user_id: str

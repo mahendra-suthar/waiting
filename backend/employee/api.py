@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from ..utils import success_response
 from .schema import RegisterEmployee, EmployeeData
-from ..queries import insert_item, prepare_item_list, filter_data, update_item, get_item
+from ..queries import insert_item, prepare_item_list, filter_data, update_item, get_item, get_item_list
 from ..constants import EMPLOYEE
 from ..auth.helpers import JWTBearer
 from .helpers import prepare_employee_queue_history, prepare_employee_queue_history_as_per_status
@@ -72,6 +72,15 @@ async def get_employees(
         'search_string': search_string
     }
     response_data = prepare_item_list(data_dict)
+    data = response_data.get("data")
+
+    user_data = get_item_list(collection_name=user_collection, columns=['full_name'])
+    user_data_list = user_data.get('data', [])
+    user_dict = {str(user['_id']): user['full_name'] for user in user_data_list if user}
+
+    for item in data:
+        item['full_name'] = user_dict.get(item['user_id'])
+
     status_code = response_data.get("status")
     return JSONResponse(content=response_data, status_code=status_code)
 
@@ -102,7 +111,6 @@ def current_users_appointments(status: Optional[int], current_user: str = Depend
         'schema': ['user_id', 'queue_id'],
         'filters': {'is_deleted': False, 'user_id': current_user}
     })
-    print("--------employee_list--------", employee_list)
     employee_details = employee_list.get('data', [])[0] if len(employee_list.get('data', [])) > 0 else {}
     data_dict = {
         'queue_id': employee_details.get('queue_id'),
@@ -121,7 +129,9 @@ def get_employee_details(employee_id: str) -> Any:
     response_data = get_item(
         collection_name=employee_collection,
         item_id=employee_id,
-        columns=['merchant_id', 'joined_date', 'email', 'country_code', 'phone_number', 'status', 'user_id', 'queue_id']
+        columns=[
+            'merchant_id', 'joined_date', 'email', 'country_code', 'phone_number', 'status', 'user_id', 'queue_id',
+        ]
     )
     status_code = response_data.get("status")
     data = response_data.get("data")

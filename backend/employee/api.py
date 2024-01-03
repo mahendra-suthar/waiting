@@ -121,6 +121,26 @@ def current_users_appointments(status: Optional[int], current_user: str = Depend
     return JSONResponse(content=response_data, status_code=201)
 
 
+@router.get("/v1/employee_queue_appointments/{employee_id}", response_description="Get queue user appointments")
+def current_users_appointments(employee_id: str, status: int) -> Any:
+    """
+    Preparing employee's queue appointments
+    """
+    response_data = get_item(
+        collection_name=employee_collection,
+        item_id=employee_id,
+        columns=['queue_id']
+    )
+    data = response_data.get("data")
+    data_dict = {
+        'queue_id': data.get("queue_id"),
+        'status': status
+    }
+    data_dict = prepare_employee_queue_history_as_per_status(data_dict)
+    response_data = success_response(data=data_dict['data'], message="Successfully get data")
+    return JSONResponse(content=response_data, status_code=201)
+
+
 @router.get("/v1/employee/{employee_id}", response_description="Get employee")
 def get_employee_details(employee_id: str) -> Any:
     """

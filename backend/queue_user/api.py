@@ -24,7 +24,7 @@ def create_queue_user(queue_user: RegisterQueueUser = Body(...)) -> Any:
     """
     data_dict = jsonable_encoder(queue_user)
     queue_id = get_queue_using_service(data_dict)
-    user_id = queue_user['user_id']
+    user_id = data_dict['user_id']
     data_dict['queue_id'] = str(queue_id)
     del data_dict['employee_id']
     del data_dict['service_id']

@@ -1,4 +1,4 @@
-from fastapi import Request, Form
+from fastapi import Request, Form, HTTPException
 from fastapi.routing import APIRouter
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, Response, RedirectResponse
@@ -8,10 +8,9 @@ from fastapi.encoders import jsonable_encoder
 from .helpers import jinja_variables_for_queue_user, update_queue
 from ..forms import QueueUserForm
 from .schema import RegisterQueueUser, UpdateQueueUser
-from ..queries import insert_item, update_item, delete_item, get_item, get_item_list, prepare_item_list
+from ..queries import insert_item, filter_data
 from ..utils import get_current_timestamp_utc
-# from ..websocket import waiting_list_manager
-# from ..constants import QUEUE_USER_REGISTERED
+from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_IN_PROGRESS
 
 
 router = APIRouter()
@@ -96,6 +95,17 @@ async def save_queue_form(
         )
         print("item_data", item_data)
         data_dict = jsonable_encoder(item_data)
+        if queue_id and user_id:
+            q_user_obj = filter_data(
+                collection_name='queue_user',
+                filter_dict={
+                    'status': {'$in': [int(QUEUE_USER_REGISTERED), int(QUEUE_USER_IN_PROGRESS)]},
+                    'user_id': user_id, 'queue_id': queue_id
+                }
+            )
+            print("q_user_obj", q_user_obj)
+            if q_user_obj:
+                raise HTTPException(status_code=400, detail="Data already exists")
         inserted_id = insert_item(queue_user_collection, data_dict)
         update_queue(str(user_id), queue_id)
         return RedirectResponse(

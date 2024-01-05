@@ -42,6 +42,11 @@ class WaitingListManager:
             self.waiting_lists[queue_id].popleft()
             self.update_waiting_list(queue_id)
 
+    def clear_queue(self, queue_id: str):
+        if queue_id in self.waiting_lists and self.waiting_lists[queue_id]:
+            self.waiting_lists[queue_id].clear()
+            self.update_waiting_list(queue_id)
+
     async def connect_websocket(self, websocket: WebSocket):
         await websocket.accept()
         self.websocket_clients.append(websocket)

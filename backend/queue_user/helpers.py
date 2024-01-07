@@ -3,7 +3,8 @@ from fastapi import HTTPException
 
 from .schema import QueueUserData
 from ..queries import prepare_item_list, get_item_list, get_item, update_item, update_items, generate_mongo_query
-from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS, queue_user_status_choices
+from ..constants import (QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS, queue_user_status_choices,
+                         QUEUE_USER_FAILED, QUEUE_USER_CANCELLED)
 from ..websocket import waiting_list_manager
 from config.database import client_db
 
@@ -169,43 +170,88 @@ def get_business_employee_by_queue():
     return queue_dict
 
 
+def get_queue_user_filtered_data(user_id: str, status_list: list) -> list:
+    business_dict = get_business_employee_by_queue()
+    registered_filter = {
+        'collection_name': queue_user_collection,
+        'filters': {
+            'is_deleted': False,
+            "status": {'$in': status_list},
+            'user_id': user_id
+        },
+        'schema': ['queue_id', 'user_id']
+    }
+    registered_list = prepare_item_list(registered_filter)
+    registered_data = registered_list.get('data', [])
+    for data in registered_data:
+        data['queue_details'] = business_dict[data['queue_id']]
+        waiting_list = waiting_list_manager.get_waiting_list(data['queue_id'])
+        data['place_in_queue'] = waiting_list.index(data['user_id']) if data['user_id'] in waiting_list else 0
+    return registered_data
+
+
 def prepare_appointments_history(user_id: str):
-    final_list = []
-
-    if user_id:
-        position_of_queue_user = 0
-        pipeline = [
-            {
-                "$match": {
-                    "is_deleted": False,
-                    "user_id": user_id
-                }
-            },
-            {
-                "$group": {
-                    "_id": "$status",
-                    "queue_user": {"$push": "$$ROOT"}
-                }
-            }
-        ]
-        grouped_queue_user = client_db[queue_user_collection].aggregate(pipeline)
-        queue_user_status_dict = dict(queue_user_status_choices)
-        business_dict = get_business_employee_by_queue()
-        for group in grouped_queue_user:
-            data_dict = dict()
-            data_dict['status'] = {'value': group['_id'], 'label': queue_user_status_dict[group['_id']]}
-            data_dict['queue_user_details'] = []
-            for queue_user in group['queue_user']:
-                queue_id = queue_user['queue_id']
-                waiting_list = waiting_list_manager.get_waiting_list(queue_id)
-                queue_users_dict = {
-                    'id': str(queue_user['_id']),
-                    'current_length': len(waiting_list),
-                    'queue_details': business_dict[queue_id]
-                }
-                if waiting_list and user_id in waiting_list:
-                    queue_users_dict['place_in_queue'] = waiting_list.index(user_id)
-
-                data_dict['queue_user_details'].append(queue_users_dict)
-            final_list.append(data_dict)
+    progress_data = get_queue_user_filtered_data(
+        user_id, [int(QUEUE_USER_IN_PROGRESS)]
+    )
+    registered_data = get_queue_user_filtered_data(
+        user_id, [int(QUEUE_USER_REGISTERED)]
+    )
+    completed_data = get_queue_user_filtered_data(
+        user_id, [int(QUEUE_USER_COMPLETED), int(QUEUE_USER_CANCELLED), int(QUEUE_USER_FAILED)]
+    )
+    final_list = [
+        {
+            'label': 'In-Progress',
+            'queue_user_details': progress_data
+        },
+        {
+            'label': 'Registered',
+            'queue_user_details': registered_data
+        },
+        {
+            'label': 'Completed',
+            'queue_user_details': completed_data
+        }
+    ]
+    # final_list = []
+    #
+    # if user_id:
+    #     position_of_queue_user = 0
+    #     pipeline = [
+    #         {
+    #             "$match": {
+    #                 "is_deleted": False,
+    #                 "user_id": user_id
+    #             }
+    #         },
+    #         {
+    #             "$group": {
+    #                 "_id": "$status",
+    #                 "queue_user": {"$push": "$$ROOT"}
+    #             }
+    #         }
+    #     ]
+    #     grouped_queue_user = client_db[queue_user_collection].aggregate(pipeline)
+    #     queue_user_status_dict = dict(queue_user_status_choices)
+    #     business_dict = get_business_employee_by_queue()
+    #
+    #
+    #
+    #     for group in grouped_queue_user:
+    #         data_dict = dict()
+    #         data_dict['status'] = {'value': group['_id'], 'label': queue_user_status_dict[group['_id']]}
+    #         data_dict['queue_user_details'] = []
+    #         for queue_user in group['queue_user']:
+    #             queue_id = queue_user['queue_id']
+    #             queue_users_dict = {
+    #                 'id': str(queue_user['_id']),
+    #                 'current_length': len(waiting_list),
+    #                 'queue_details': business_dict[queue_id]
+    #             }
+    #             if waiting_list and user_id in waiting_list:
+    #                 queue_users_dict['place_in_queue'] = waiting_list.index(user_id)
+    #
+    #             data_dict['queue_user_details'].append(queue_users_dict)
+    #         final_list.append(data_dict)
     return {'data': final_list}

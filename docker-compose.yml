@@ -13,7 +13,9 @@ services:
     depends_on:
       - mongo-db
     volumes:
+      - ./backend:/app/backend
       - waiting-volume:/app/data
+      - "../business-post:/app/business-post"
 
   mongo-db:
     image: mongo:latest

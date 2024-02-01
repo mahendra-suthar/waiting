@@ -4,10 +4,10 @@ from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
 
-from ..utils import success_response, error_response
+from ..utils import success_response, get_current_timestamp_utc
 from .schema import RegisterQueueUser
 from ..queries import insert_item, prepare_item_list, update_items, update_item, get_item, filter_data
-from .helpers import get_queue_using_service, update_queue, prepare_next_user, prepare_appointments_history
+from .helpers import get_queue_using_service, update_queue, prepare_appointments_history
 from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS
 from ..websocket import waiting_list_manager
 from ..auth.helpers import JWTBearer
@@ -66,7 +66,7 @@ def queue_next_user(queue_id: str) -> Any:
     # if current_user:
     current_user = waiting_list[0] if len(waiting_list) > 0 else None
     next_user = waiting_list[1] if len(waiting_list) > 1 else None
-    data_dict = {'status': QUEUE_USER_COMPLETED}
+    data_dict = {'status': QUEUE_USER_COMPLETED, "dequeue_time": get_current_timestamp_utc()}
 
     if current_user:
         match_dict = {'user_id': current_user, 'queue_id': queue_id}

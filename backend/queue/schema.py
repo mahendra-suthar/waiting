@@ -2,7 +2,7 @@ from datetime import time
 from typing import Optional
 from pydantic import BaseModel, EmailStr, constr
 
-from ..constants import QUEUE_REGISTERED
+from ..constants import QUEUE_REGISTERED, QUEUE_RUNNING_STOP
 
 employee_collection = 'queue'
 
@@ -17,6 +17,7 @@ class RegisterQueue(BaseModel):
     start_time: time
     end_time: time
     status: int = QUEUE_REGISTERED
+    running_status: int = QUEUE_RUNNING_STOP
 
     class Config:
         from_attributes = True
@@ -43,3 +44,4 @@ class QueueData(BaseModel):
     current_length: int
     start_time: int
     end_time: int
+    running_status: int

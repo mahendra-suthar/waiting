@@ -82,6 +82,17 @@ queue_user_status_choices = (
 )
 
 
+QUEUE_RUNNING_START = 1
+QUEUE_RUNNING_ON_HOLD = 2
+QUEUE_RUNNING_STOP = 3
+
+queue_running_status_choices = (
+    (QUEUE_RUNNING_START, "Start"),
+    (QUEUE_RUNNING_ON_HOLD, "On Hold"),
+    (QUEUE_RUNNING_STOP, "Stop"),
+)
+
+
 SERVICE_REGISTERED = 1
 SERVICE_ACTIVE = 1
 SERVICE_INACTIVE = 1
@@ -118,4 +129,39 @@ HOURLY_FEE = 2
 fee_type_choices = (
     (FLAT_FEE, "Flat Fee"),
     (HOURLY_FEE, "Hourly Fee"),
+)
+
+
+PAID_LEAVE = 1
+CASUAL_LEAVE = 2
+SICK_LEAVE = 3
+
+leave_type_choices = (
+    (PAID_LEAVE, "Paid Leave"),
+    (CASUAL_LEAVE, "Casual Leave"),
+    (SICK_LEAVE, "Sick Leave")
+)
+
+
+LEAVE_REQUESTED = 1
+LEAVE_APPROVED = 2
+LEAVE_CANCELLED = 3
+LEAVE_REJECTED = 4
+
+leave_status_choices = (
+    (LEAVE_REQUESTED, "Requested"),
+    (LEAVE_APPROVED, "Approved"),
+    (LEAVE_CANCELLED, "Cancelled"),
+    (LEAVE_REJECTED, "Rejected")
+)
+
+
+POST = 1
+REELS = 2
+STORY = 3
+
+post_type_choices = (
+    (POST, "Post"),
+    (REELS, "Reels"),
+    (STORY, "Story"),
 )

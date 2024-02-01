@@ -12,7 +12,8 @@ from wtforms import (
     TimeField,
     FieldList,
     FormField,
-    FloatField
+    FloatField,
+    FileField
 )
 
 from wtforms.validators import DataRequired, Regexp, Email
@@ -20,7 +21,7 @@ from bson import ObjectId
 
 from .queries import filter_data
 from .utils import prepare_dropdown_for_forms, get_current_timestamp_utc, prepare_static_choice_dropdown
-from .constants import DEFAULT_COUNTRY_CODE, gender_choices, days_of_week_choices, fee_type_choices
+from .constants import DEFAULT_COUNTRY_CODE, leave_status_choices, days_of_week_choices, leave_type_choices
 
 category_collection = 'category'
 business_collection = 'business'
@@ -336,3 +337,51 @@ class ServiceForm(StarletteForm):
             filter_dict['_id'] = {'$ne': ObjectId(item_id)}
         if filter_data(service_collection, filter_dict):
             raise ValidationError("Service Name already exists")
+
+
+class LeaveRequestForm(StarletteForm):
+    leave_request_id = HiddenField("leave_request_id")
+    employee_id = SelectField(
+        "Employee",
+        validators=[DataRequired()],
+        choices=[]
+    )
+    start_date_time = IntegerField("Start Date Time")
+    end_date_time = IntegerField("End Date Time")
+    leave_type = SelectField(
+        "Leave Type",
+        choices=prepare_static_choice_dropdown(leave_type_choices)
+    )
+    duration = IntegerField("Duration")
+    status = SelectField(
+        "Leave Status",
+        choices=prepare_static_choice_dropdown(leave_status_choices)
+    )
+    requested_date = IntegerField("Requested Date")
+    approval_date = IntegerField("Approval Date")
+    rejection_reason = StringField("Rejected Reason")
+
+    # def validate_name(self, field):
+    #     item_id = self.data.get("user_id")
+    #     filter_dict = {'name': field.data, "is_deleted": False}
+    #     if item_id:
+    #         filter_dict['_id'] = {'$ne': ObjectId(item_id)}
+    #     if filter_data(service_collection, filter_dict):
+    #         raise ValidationError("Service Name already exists")
+
+
+class PostForm(StarletteForm):
+    post_id = HiddenField("post_id")
+    business_id = SelectField(
+        "Business",
+        validators=[DataRequired()],
+        choices=[]
+    )
+    title = StringField("Title")
+    image = FileField("Image")
+    content = StringField("Content")
+    post_type = SelectField(
+        "Post Type",
+        validators=[DataRequired()],
+        choices=[]
+    )

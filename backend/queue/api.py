@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from typing import Any
 
-from ..utils import success_response
+from ..utils import success_response, get_current_timestamp_utc
 from ..queries import prepare_item_list, update_items, get_item
 from ..websocket import waiting_list_manager
 from config.database import client_db
@@ -31,7 +31,11 @@ def start_queue(queue_id: str) -> Any:
 
     if not current_user:
         match_dict = {'user_id': first_user, 'queue_id': queue_id}
-        update_items(queue_user_collection, match_dict, {'status': QUEUE_USER_IN_PROGRESS})
+        update_items(
+            queue_user_collection,
+            match_dict,
+            {'status': QUEUE_USER_IN_PROGRESS, 'turn_time': get_current_timestamp_utc()}
+        )
         update_items(
             queue_collection,
             {'_id': ObjectId(queue_id)},

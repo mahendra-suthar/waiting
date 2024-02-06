@@ -2,10 +2,12 @@ from fastapi.responses import JSONResponse
 from fastapi import Body, HTTPException
 from fastapi.routing import APIRouter
 from typing import Any
+from fastapi.encoders import jsonable_encoder
 
 from ..utils import success_response, prepare_dropdown_data
-from .schema import RegisterLeaveRequest, LeaveRequestData
-from ..queries import insert_item, prepare_item_list
+from .schema import RegisterLeaveRequest, LeaveRequestData, LeaveRequestActions
+from ..queries import insert_item, prepare_item_list, update_item
+from ..constants import LEAVE_REJECTED
 
 router = APIRouter()
 leave_collection = 'leave'
@@ -38,5 +40,19 @@ def get_service(
         'search_string': search_string
     }
     response_data = prepare_item_list(data_dict)
+    status_code = response_data.get("status")
+    return JSONResponse(content=response_data, status_code=status_code)
+
+
+@router.put("/v1/leave_actions/{leave_id}", response_description="Approve or Reject leave")
+def approve_or_reject_leave_request(
+        leave_id: str,
+        updated_data: LeaveRequestActions = Body(...),
+) -> Any:
+    """
+    Actions on Leave Request List API
+    """
+    updated_dict = jsonable_encoder(updated_data)
+    response_data = update_item(leave_collection, item_id=leave_id, item_data=updated_dict)
     status_code = response_data.get("status")
     return JSONResponse(content=response_data, status_code=status_code)

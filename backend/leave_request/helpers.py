@@ -2,11 +2,7 @@ from .schema import LeaveRequestData
 from ..queries import prepare_item_list
 
 leave_collection = 'leave'
-queue_collection = 'queue'
-employee_collection = 'employee'
-business_collection = 'business'
-user_collection = 'users'
-category_collection = 'category'
+leave_type_collection = 'leave_type'
 
 
 def jinja_variables_for_leave_request():

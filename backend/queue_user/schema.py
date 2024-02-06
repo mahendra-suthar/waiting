@@ -11,6 +11,7 @@ class RegisterQueueUser(BaseModel):
     queue_id: str
     enqueue_time: int
     dequeue_time: int
+    turn_time: int
     priority: bool = False
     status: int = QUEUE_USER_REGISTERED
     service_id: Optional[str] = None
@@ -34,6 +35,7 @@ class QueueUserData(BaseModel):
     user_id: str
     queue_id: str
     enqueue_time: int
+    turn_time: int
     dequeue_time: int
     status: int
     priority: bool

@@ -143,13 +143,13 @@ leave_type_choices = (
 )
 
 
-LEAVE_REQUESTED = 1
+LEAVE_PENDING = 1
 LEAVE_APPROVED = 2
 LEAVE_CANCELLED = 3
 LEAVE_REJECTED = 4
 
 leave_status_choices = (
-    (LEAVE_REQUESTED, "Requested"),
+    (LEAVE_PENDING, "Pending"),
     (LEAVE_APPROVED, "Approved"),
     (LEAVE_CANCELLED, "Cancelled"),
     (LEAVE_REJECTED, "Rejected")

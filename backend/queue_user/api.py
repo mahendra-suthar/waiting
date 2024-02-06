@@ -75,7 +75,7 @@ def queue_next_user(queue_id: str) -> Any:
             waiting_list_manager.remove_customer(queue_id)
         if next_user:
             match_dict = {'user_id': next_user, 'queue_id': queue_id}
-            data_dict = {'status': QUEUE_USER_IN_PROGRESS}
+            data_dict = {'status': QUEUE_USER_IN_PROGRESS, 'turn_time': get_current_timestamp_utc()}
             return_data = update_items(queue_user_collection, match_dict, data_dict)
             if return_data:
                 data_dict = {

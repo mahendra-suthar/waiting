@@ -346,20 +346,21 @@ class LeaveRequestForm(StarletteForm):
         validators=[DataRequired()],
         choices=[]
     )
-    start_date_time = IntegerField("Start Date Time")
-    end_date_time = IntegerField("End Date Time")
+    start_date = IntegerField("Start Date")
+    end_date = IntegerField("End Date")
+    start_duration = IntegerField("Start Duration")
+    end_duration = IntegerField("End Duration")
     leave_type = SelectField(
         "Leave Type",
         choices=prepare_static_choice_dropdown(leave_type_choices)
     )
+    note = StringField("Note")
     duration = IntegerField("Duration")
     status = SelectField(
         "Leave Status",
         choices=prepare_static_choice_dropdown(leave_status_choices)
     )
     requested_date = IntegerField("Requested Date")
-    approval_date = IntegerField("Approval Date")
-    rejection_reason = StringField("Rejected Reason")
 
     # def validate_name(self, field):
     #     item_id = self.data.get("user_id")
@@ -385,3 +386,29 @@ class PostForm(StarletteForm):
         validators=[DataRequired()],
         choices=[]
     )
+
+
+class LeaveTypeForm(StarletteForm):
+    leave_type_id = HiddenField("leave_type_id")
+    business_id = SelectField(
+        "Business",
+        choices=[]
+    )
+    name = StringField("Name")
+    description = StringField("Description")
+
+
+class LeaveBalanceForm(StarletteForm):
+    leave_balance_id = HiddenField("leave_balance_id")
+    leave_type_id = SelectField(
+        "Leave Type",
+        choices=[]
+    )
+    employee_id = SelectField(
+        "Employee",
+        choices=[]
+    )
+    leave_year = StringField("Leave Year")
+    entitlement = IntegerField("Entitlement")
+    consumed = IntegerField("Consumed")
+    available = IntegerField("Available")

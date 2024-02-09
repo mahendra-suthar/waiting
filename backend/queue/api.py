@@ -29,21 +29,21 @@ def start_queue(queue_id: str) -> Any:
     data_dict = get_item(queue_collection, item_id=queue_id, columns=['current_user'])['data']
     current_user = data_dict['current_user']
 
-    if not current_user:
-        match_dict = {'user_id': first_user, 'queue_id': queue_id}
-        update_items(
-            queue_user_collection,
-            match_dict,
-            {'status': QUEUE_USER_IN_PROGRESS, 'turn_time': get_current_timestamp_utc()}
-        )
-        update_items(
-            queue_collection,
-            {'_id': ObjectId(queue_id)},
-            {'running_status': QUEUE_RUNNING_START}
-        )
-        response_data = success_response(message="Successfully Added current user and start")
-    else:
-        response_data = success_response(message="Current user exist")
+    # if not current_user:
+    match_dict = {'user_id': first_user, 'queue_id': queue_id}
+    update_items(
+        queue_user_collection,
+        match_dict,
+        {'status': QUEUE_USER_IN_PROGRESS, 'turn_time': get_current_timestamp_utc()}
+    )
+    update_items(
+        queue_collection,
+        {'_id': ObjectId(queue_id)},
+        {'running_status': QUEUE_RUNNING_START}
+    )
+    response_data = success_response(message="Successfully Added current user and start")
+    # else:
+    #     response_data = success_response(message="Current user exist")
     return JSONResponse(content=response_data, status_code=201)
 
 

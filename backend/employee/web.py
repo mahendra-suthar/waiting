@@ -10,7 +10,7 @@ from ..forms import EmployeeForm
 from .schema import RegisterEmployee, UpdateEmployee
 from ..queries import insert_item, get_item, update_item, delete_item
 from ..constants import EMPLOYEE
-from ..utils import prepare_dropdown_for_forms
+from ..utils import prepare_dropdown_for_forms, generate_qr_code
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
@@ -67,6 +67,7 @@ async def save_business_form(
     form.employee_number.data = employee_number
 
     if await form.validate():
+        qr_file_path = generate_qr_code('http://ec2-35-154-41-121.ap-south-1.compute.amazonaws.com:8000/web/employee')
         item_data = RegisterEmployee(
             merchant_id=merchant_id,
             email=email,
@@ -77,7 +78,8 @@ async def save_business_form(
             department_id=department_id,
             employee_number=employee_number,
             user_id=user_id,
-            queue_id=queue_id
+            queue_id=queue_id,
+            qr_code=qr_file_path
         )
         data_dict = jsonable_encoder(item_data)
         inserted_id = insert_item(employee_collection, data_dict)

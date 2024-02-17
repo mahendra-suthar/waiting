@@ -53,3 +53,5 @@ win32-setctime==1.1.0
 WTForms==3.0.1
 yarl==1.9.2
 firebase-admin==6.3.0
+qrcode==7.4.2
+pillow==10.2.0

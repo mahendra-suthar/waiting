@@ -6,11 +6,13 @@ from fastapi.encoders import jsonable_encoder
 
 from ..utils import success_response, prepare_dropdown_data
 from .schema import RegisterLeaveRequest, LeaveRequestData, LeaveRequestActions
-from ..queries import insert_item, prepare_item_list, update_item
+from ..queries import insert_item, prepare_item_list, update_item, get_item_list
 from ..constants import LEAVE_REJECTED
 
 router = APIRouter()
 leave_collection = 'leave'
+user_collection = 'users'
+employee_collection = 'employee'
 
 
 @router.post("/v1/leave_request", response_description="Leave Request")
@@ -24,10 +26,11 @@ def create_leave_request(leave_request: RegisterLeaveRequest = Body(...)) -> Any
 
 
 @router.get("/v1/leave_request", response_description="Get Leave Request List")
-def get_service(
+def get_leave_request_list(
         page_number: int = 1,
         page_size: int = 10,
-        search_string: str = None
+        search_string: str = None,
+        status: int = None
 ) -> Any:
     """
     Get Leave Request List API
@@ -39,7 +42,25 @@ def get_service(
         'page_size': page_size,
         'search_string': search_string
     }
+    if status:
+        data_dict['filters'] = {'status': status}
+
     response_data = prepare_item_list(data_dict)
+    data = response_data.get("data")
+    emp_data = get_item_list(collection_name=employee_collection,
+                             columns=['user_id', 'email', 'country_code', 'phone_number'])
+
+    emp_data_list = emp_data.get('data', [])
+    emp_dict = {str(emp['_id']): {**emp} for emp in emp_data_list if emp}
+
+    user_data = get_item_list(collection_name=user_collection, columns=['full_name'])
+    user_data_list = user_data.get('data', [])
+    user_dict = {str(user['_id']): user['full_name'] for user in user_data_list if user}
+
+    for item in data:
+        item['emp'] = emp_dict.get(str(item['employee_id']), {})
+        item['emp']['full_name'] = user_dict.get(item.get('emp', {}).get('user_id', None), None)
+
     status_code = response_data.get("status")
     return JSONResponse(content=response_data, status_code=status_code)
 

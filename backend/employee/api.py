@@ -5,7 +5,7 @@ from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any, Optional
 
-from ..utils import success_response
+from ..utils import success_response, generate_qr_code
 from .schema import RegisterEmployee, EmployeeData
 from ..queries import insert_item, prepare_item_list, filter_data, update_item, get_item, get_item_list
 from ..constants import EMPLOYEE
@@ -48,7 +48,10 @@ def create_employee(employee: RegisterEmployee = Body(...)) -> Any:
         if not user_exist:
             raise HTTPException(status_code=400, detail="User not found")
 
-    inserted_employee = insert_item(employee_collection, employee_data, )
+    qr_file_path = generate_qr_code('http://ec2-35-154-41-121.ap-south-1.compute.amazonaws.com:8000/web/employee')
+    employee_data['qr_code'] = qr_file_path
+    inserted_employee = insert_item(employee_collection, employee_data)
+
     if inserted_employee and user_id:
         update_item(user_collection, str(user_id), {'user_type': EMPLOYEE})
     response_data = success_response(data={'employee_id': str(inserted_employee)}, message="Successfully inserted data")

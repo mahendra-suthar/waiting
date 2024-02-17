@@ -21,6 +21,7 @@ class RegisterBusiness(BaseModel):
     email_verify: bool = False
     phone_verify: bool = False
     owner_id: str
+    qr_code: str = None
 
     class Config:
         from_attributes = True
@@ -51,4 +52,5 @@ class BusinessData(BaseModel):
     address_id: str
     category_id: str
     about_business: str
+    qr_code: str
     status: int

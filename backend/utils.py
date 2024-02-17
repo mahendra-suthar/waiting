@@ -1,7 +1,13 @@
+import os
+from fastapi import UploadFile, File
+from io import BytesIO
+import qrcode
+import qrcode.constants
 import pyotp
 import random
 from datetime import datetime
 from twilio.rest import Client
+from PIL import Image
 
 from config.config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
 from config.redis import redis_client
@@ -155,3 +161,78 @@ def prepare_static_choice_dropdown(choices):
     choice_list = [(int(value), label) for value, label in choices]
     choice_list = [(None, 'Select Item...')] + choice_list
     return choice_list
+
+
+# async def save_uploaded_file(img: any) -> str:
+#     file_name = f"qr_{get_current_timestamp_utc()}.png"
+#     file_path = f"/qr-code/{file_name}"  # Update the path as needed
+#     img.save(f"/app/{file_path}")
+#     return file_path
+
+
+def generate_qr_code(data):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    file_name = f"qr_{get_current_timestamp_utc()}.png"
+    file_path = f"/qr-code/{file_name}"  # Update the path as needed
+    img.save(f"/app/{file_path}")
+    return file_path
+
+
+# def generate_qr_code_with_logo(data, logo_path):
+#     try:
+#         # Generate the QR code
+#         qr = qrcode.QRCode(
+#             version=1,
+#             error_correction=qrcode.constants.ERROR_CORRECT_L,
+#             box_size=10,
+#             border=4,
+#         )
+#         qr.add_data(data)
+#         qr.make(fit=True)
+#         qr_image = qr.make_image(fill_color="black", back_color="white").convert('RGBA')
+#         print("QR image created:", qr_image)
+#
+#         # Load the business logo
+#         with open(logo_path, "rb") as f:
+#             logo_data = f.read()
+#         logo = Image.open(BytesIO(logo_data))
+#         print("Logo image opened:", logo)
+#
+#         # Calculate the position to place the logo in the center of the QR code
+#         # qr_width, qr_height = qr_image.size
+#         # logo_width, logo_height = logo.size
+#         # position = ((qr_width - logo_width) // 2, (qr_height - logo_height) // 2)
+#
+#         # Calculate the position to place the logo in the center of the QR code
+#         qr_width, qr_height = qr_image.size
+#         logo_width, logo_height = logo.size
+#         # Ensure the logo is not placed outside the boundaries of the QR code image
+#         x_offset = max(0, (qr_width - logo_width) // 2)
+#         y_offset = max(0, (qr_height - logo_height) // 2)
+#         position = (x_offset, y_offset)
+#         print("Position calculated:", position)
+#
+#
+#         # Paste the logo onto the QR code
+#         qr_image.paste(logo, position, logo)
+#         print("Logo pasted onto QR image")
+#
+#         # Save the resulting image
+#         file_name = f"qr_{get_current_timestamp_utc()}.png"
+#         file_path = f"/qr-code/{file_name}"  # Update the path as needed
+#         qr_image.save(f"/app/{file_path}")
+#         print("QR code with logo saved:", file_path)
+#
+#         return file_path
+#
+#     except Exception as error:
+#         log.error(f"Something went wrong during generate_qr_code_with_logo: {error}")
+#         return ''

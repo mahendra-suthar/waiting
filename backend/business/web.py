@@ -1,5 +1,5 @@
 import re
-from fastapi import Request, Form
+from fastapi import Request, Form, UploadFile, File
 from fastapi.routing import APIRouter
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -11,7 +11,7 @@ from .schema import RegisterBusiness, UpdateBusiness
 from ..forms import BusinessForm, BusinessScheduleForm
 from ..queries import insert_item, get_item, update_item, delete_item
 from ..constants import MERCHANT
-from ..utils import prepare_dropdown_for_forms
+from ..utils import prepare_dropdown_for_forms, generate_qr_code
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
@@ -66,6 +66,7 @@ async def save_business_form(
     form.owner_id.data = owner_id
 
     if await form.validate():
+        qr_file_path = generate_qr_code('http://ec2-35-154-41-121.ap-south-1.compute.amazonaws.com:8000/web/business')
         business_data = RegisterBusiness(
             name=name,
             email=email,
@@ -76,7 +77,8 @@ async def save_business_form(
             about_business=about_business,
             category_id=category_id,
             status=1,
-            owner_id=owner_id
+            owner_id=owner_id,
+            qr_code=qr_file_path
         )
         business_data_dict = jsonable_encoder(business_data)
         inserted_id = insert_item(business_collection, business_data_dict)

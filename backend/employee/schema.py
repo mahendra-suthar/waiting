@@ -21,6 +21,7 @@ class RegisterEmployee(BaseModel):
     status: int = EMPLOYEE_REGISTERED
     user_id: str
     queue_id: str
+    qr_code: str
 
     # @validator("country_code")
     # def validate_country_code(cls, value):
@@ -73,3 +74,4 @@ class EmployeeData(BaseModel):
     employee_number: int
     queue_id: str
     user_id: str
+    qr_code: str

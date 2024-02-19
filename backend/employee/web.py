@@ -67,7 +67,6 @@ async def save_business_form(
     form.employee_number.data = employee_number
 
     if await form.validate():
-        qr_file_path = generate_qr_code('http://ec2-35-154-41-121.ap-south-1.compute.amazonaws.com:8000/web/employee')
         item_data = RegisterEmployee(
             merchant_id=merchant_id,
             email=email,
@@ -78,12 +77,14 @@ async def save_business_form(
             department_id=department_id,
             employee_number=employee_number,
             user_id=user_id,
-            queue_id=queue_id,
-            qr_code=qr_file_path
+            queue_id=queue_id
         )
         data_dict = jsonable_encoder(item_data)
         inserted_id = insert_item(employee_collection, data_dict)
         if inserted_id and user_id:
+            qr_file_path = generate_qr_code(str(inserted_id))
+            update_item(employee_collection, str(inserted_id), {'qr_code': qr_file_path})
+
             update_item(user_collection, user_id, {'user_type': EMPLOYEE})
         return RedirectResponse(
             "/web/employee", status_code=302

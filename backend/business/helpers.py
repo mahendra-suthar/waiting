@@ -61,14 +61,17 @@ async def insert_business_request(business_dict: dict) -> str:
     if not owner_exist:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Owner not found")
 
-    qr_file_path = generate_qr_code('http://ec2-35-154-41-121.ap-south-1.compute.amazonaws.com:8000/web/business')
-    business_dict['qr_code'] = qr_file_path or None
-    res_data = insert_item(collection_name='business', item_data=business_dict)
+    # qr_file_path = generate_qr_code('http://ec2-35-154-41-121.ap-south-1.compute.amazonaws.com:8000/web/business')
+    business_dict['qr_code'] = None
+    inserted_id = insert_item(collection_name='business', item_data=business_dict)
 
     user_id = business_dict.get('owner_id')
-    if res_data and user_id:
+    if inserted_id and user_id:
+        qr_file_path = generate_qr_code(str(inserted_id))
+        update_item(business_collection, str(inserted_id), {'qr_code': qr_file_path})
+
         update_item(user_collection, str(user_id), {'user_type': MERCHANT})
-    return res_data
+    return inserted_id
 
 
 async def update_business_request(business_id: str, business_dict: dict) -> Any:

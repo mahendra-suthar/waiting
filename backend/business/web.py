@@ -66,7 +66,6 @@ async def save_business_form(
     form.owner_id.data = owner_id
 
     if await form.validate():
-        qr_file_path = generate_qr_code('http://ec2-35-154-41-121.ap-south-1.compute.amazonaws.com:8000/web/business')
         business_data = RegisterBusiness(
             name=name,
             email=email,
@@ -77,12 +76,14 @@ async def save_business_form(
             about_business=about_business,
             category_id=category_id,
             status=1,
-            owner_id=owner_id,
-            qr_code=qr_file_path
+            owner_id=owner_id
         )
         business_data_dict = jsonable_encoder(business_data)
         inserted_id = insert_item(business_collection, business_data_dict)
         if inserted_id and owner_id:
+            qr_file_path = generate_qr_code(str(inserted_id))
+            update_item(business_collection, str(inserted_id), {'qr_code': qr_file_path})
+
             update_item(user_collection, owner_id, {'user_type': MERCHANT})
         return RedirectResponse(
             "/web/business", status_code=302

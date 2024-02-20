@@ -7,20 +7,23 @@ from fastapi.encoders import jsonable_encoder
 from ..utils import success_response, prepare_dropdown_data
 from .schema import RegisterAttendance, AttendanceData
 from ..queries import insert_item, prepare_item_list, update_item, get_item_list
-from ..constants import LEAVE_REJECTED
+from ..constants import ATTENDANCE_CLOCK_IN, ATTENDANCE_CLOCK_OUT
 
 router = APIRouter()
 attendance_collection = 'attendance'
 employee_collection = 'employee'
 
 
-@router.post("/v1/clock-in", response_description="Clock in")
-def clock_in(attendance: RegisterAttendance = Body(...)) -> Any:
+@router.post("/v1/clock-in-out", response_description="Clock In Out")
+def clock_in_out(attendance: RegisterAttendance = Body(...)) -> Any:
     """
-    Employee Clock In API
+    Employee Clock In Out API
     """
     inserted_id = insert_item(attendance_collection, attendance)
     if inserted_id:
-        update_item(employee_collection, str(attendance.employee_id), {'is_available': True})
+        update_item(
+            employee_collection,
+            str(attendance.employee_id),
+            {'is_available': True if ATTENDANCE_CLOCK_IN == int(attendance.event_type) else False})
     response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)

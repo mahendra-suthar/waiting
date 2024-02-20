@@ -19,6 +19,7 @@ from backend.websocket import router as websocket_router
 from backend.leave_request.api import router as leave_router
 from backend.post.api import router as post_router
 from backend.leave_type.api import router as leave_type_router
+from backend.clock_in_out.api import router as clock_router
 
 from backend.users.web import router as user_web_router
 from backend.employee.web import router as employee_web_router
@@ -32,6 +33,7 @@ from backend.employee_service.web import router as employee_service_web_router
 from backend.leave_request.web import router as leave_web_router
 from backend.post.web import router as post_web_router
 from backend.leave_type.web import router as leave_type_web_router
+from backend.clock_in_out.web import router as clock_web_router
 
 from backend.utils import error_response
 
@@ -46,7 +48,7 @@ async def root():
 
 app.mount("/static", StaticFiles(directory=r"static"), name="static")
 app.mount("/business-post", StaticFiles(directory="business-post"), name="business-post")
-
+app.mount("/qr-code", StaticFiles(directory="qr-code"), name="qr-code")
 
 app.include_router(user_router, prefix="/api", tags=['USER'])
 app.include_router(business_router, prefix="/api", tags=['BUSINESS'])
@@ -63,6 +65,7 @@ app.include_router(websocket_router, prefix="", tags=['WEBSOCKET'])
 app.include_router(leave_router, prefix="/api", tags=['LEAVE_REQUEST'])
 app.include_router(post_router, prefix="/api", tags=['POST'])
 app.include_router(leave_type_router, prefix="/api", tags=['LEAVE_TYPE'])
+app.include_router(clock_router, prefix="/api", tags=['ATTENDANCE'])
 
 app.include_router(user_web_router, prefix="/web", tags=['USER'])
 app.include_router(employee_web_router, prefix="/web", tags=['EMPLOYEE'])
@@ -76,6 +79,7 @@ app.include_router(employee_service_web_router, prefix="/web", tags=['EMPLOYEE_S
 app.include_router(leave_web_router, prefix="/web", tags=['LEAVE_REQUEST'])
 app.include_router(post_web_router, prefix="/web", tags=['POST'])
 app.include_router(leave_type_web_router, prefix="/web", tags=['LEAVE_TYPE'])
+app.include_router(clock_web_router, prefix="/web", tags=['ATTENDANCE'])
 
 
 @app.exception_handler(HTTPException)

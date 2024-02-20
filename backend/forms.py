@@ -412,3 +412,14 @@ class LeaveBalanceForm(StarletteForm):
     entitlement = IntegerField("Entitlement")
     consumed = IntegerField("Consumed")
     available = IntegerField("Available")
+
+
+class AttendanceForm(StarletteForm):
+    attendance_id = HiddenField("attendance_id")
+    employee_id = SelectField(
+        "Employee",
+        choices=[]
+    )
+    date = IntegerField("Attendance Date")
+    clock_in_time = IntegerField("Clock In Time")
+    clock_out_time = IntegerField("Clock Out Time")

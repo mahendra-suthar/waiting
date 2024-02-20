@@ -52,6 +52,20 @@ employee_status_choices = (
 )
 
 
+# WORKING_STATUS_ON_LEAVE = 3
+# WORKING_STATUS_ON_BREAK = 1
+# WORKING_STATUS_ON_PARTIAL_LEAVE = 2
+# WORKING_STATUS_ON_HALF_DAY_LEAVE = 2
+# WORKING_STATUS_REMOTELY = 2
+# WORKING_STATUS_IN_MEETING = 2
+#
+# working_status_choices = (
+#     (WORKING_STATUS_ON_BREAK, "Available"),
+#     (WORKING_STATUS_ON_PARTIAL_LEAVE, "Unavailable"),
+#     (WORKING_STATUS_ON_LEAVE, "On Leave"),
+# )
+
+
 QUEUE_REGISTERED = 1
 QUEUE_ACTIVE = 2
 QUEUE_SUSPENDED = 3
@@ -165,3 +179,13 @@ post_type_choices = (
     (REELS, "Reels"),
     (STORY, "Story"),
 )
+
+
+ATTENDANCE_CLOCK_IN = 1
+ATTENDANCE_CLOCK_OUT = 2
+
+attendance_choices = (
+    (ATTENDANCE_CLOCK_IN, "Clock In"),
+    (ATTENDANCE_CLOCK_OUT, "Clock Out")
+)
+

@@ -1,6 +1,3 @@
-import re
-import uuid
-from typing import Optional
 from pydantic import BaseModel, EmailStr, constr, validator
 
 from ..constants import EMPLOYEE_REGISTERED
@@ -22,6 +19,8 @@ class RegisterEmployee(BaseModel):
     user_id: str
     queue_id: str
     qr_code: str = None
+    is_available: bool = False
+    # working_status: int = AVAILABILITY_UNAVAILABLE
 
     # @validator("country_code")
     # def validate_country_code(cls, value):

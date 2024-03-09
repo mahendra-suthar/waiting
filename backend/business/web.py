@@ -79,6 +79,7 @@ async def save_business_form(
             owner_id=owner_id
         )
         business_data_dict = jsonable_encoder(business_data)
+        del business_data_dict['schedule_list']
         inserted_id = insert_item(business_collection, business_data_dict)
         if inserted_id and owner_id:
             qr_file_path = generate_qr_code(str(inserted_id))

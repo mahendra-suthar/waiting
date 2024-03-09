@@ -7,8 +7,9 @@ category_collection = 'business_schedule'
 class RegisterBusinessSchedule(BaseModel):
     merchant_id: str
     day_of_week: int
-    opening_time: time
-    closing_time: time
+    opening_time: time = None
+    closing_time: time = None
+    is_open: bool = False
 
     class Config:
         from_attributes = True

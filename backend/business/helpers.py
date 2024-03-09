@@ -1,10 +1,12 @@
 from fastapi import HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from bson import ObjectId
 from typing import Any
 
 from config.database import client_db
 from ..queries import insert_item, update_item, get_item, get_item_list, filter_data, prepare_item_list, generate_mongo_query
 from .schema import BusinessData
+from ..business_schedule.schema import RegisterBusinessSchedule
 from ..utils import success_response, generate_qr_code
 from ..constants import MERCHANT, business_status_choices
 
@@ -15,6 +17,7 @@ category_collection = 'category'
 employee_collection = 'employee'
 queue_collection = 'queue'
 user_collection = 'users'
+business_schedule_collection = 'business_schedule'
 
 
 def jinja_variables_for_business():
@@ -63,6 +66,8 @@ async def insert_business_request(business_dict: dict) -> str:
 
     # qr_file_path = generate_qr_code('http://ec2-35-154-41-121.ap-south-1.compute.amazonaws.com:8000/web/business')
     business_dict['qr_code'] = None
+    schedule_list = business_dict.get('schedule_list')
+    del business_dict['schedule_list']
     inserted_id = insert_item(collection_name='business', item_data=business_dict)
 
     user_id = business_dict.get('owner_id')
@@ -71,6 +76,18 @@ async def insert_business_request(business_dict: dict) -> str:
         update_item(business_collection, str(inserted_id), {'qr_code': qr_file_path})
 
         update_item(user_collection, str(user_id), {'user_type': MERCHANT})
+
+        if schedule_list:
+            for schedule in schedule_list:
+                business_data = RegisterBusinessSchedule(
+                    merchant_id=inserted_id,
+                    day_of_week=schedule.get('day_of_week'),
+                    opening_time=schedule.get('opening_time'),
+                    closing_time=schedule.get('closing_time'),
+                    is_open=schedule.get('is_open')
+                )
+                business_data_dict = jsonable_encoder(business_data)
+                insert_item(business_schedule_collection, business_data_dict)
     return inserted_id
 
 

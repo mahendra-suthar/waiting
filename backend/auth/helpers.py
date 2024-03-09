@@ -10,7 +10,7 @@ from config.database import client_db
 from ..users.helpers import insert_user_request
 from config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..utils import success_response, temp_gen_otp_and_store, temp_verify_otp
-from ..queries import insert_item, update_item, filter_data
+from ..queries import insert_item, update_item, filter_data, get_item, prepare_item_list
 from ..constants import MERCHANT, EMPLOYEE
 
 collection_name = 'users'
@@ -57,21 +57,41 @@ def verify_phone_otp_and_login(user):
             if temp_verify_otp(phone_number, otp):
                 user_obj = user_collection.find_one({'phone_number': phone_number})
                 if not user_obj:
-                    user_id = update_item({
-                        'phone_number': phone_number})
+                    user_id = None
                 else:
                     user_id = str(user_obj['_id'])
 
                 user_obj['_id'] = user_id
+
+                business_dict = {
+                    'collection_name': 'business',
+                    'schema': ['name', 'category_id', 'phone', 'email', 'country_code', "address_id", 'about_business',
+                                'phone_number']
+                }
+                business_response = prepare_item_list(business_dict)
+                business_list = business_response.get('data', [])
+
+                employee_list_dict = {
+                    'collection_name': 'employee',
+                    'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id', 'queue_id'],
+                }
+                employees_response = prepare_item_list(employee_list_dict)
+                employee_list = employees_response.get('data', [])
+
+                business_data_dict = {business['_id']: {**business} for business in business_list if business}
+                employee_dict = {employee['_id']: {**employee} for employee in employee_list if employee}
+
                 if user_obj['user_type']:
                     if user_obj['user_type'] == MERCHANT:
                         business_obj = business_collection.find_one({'owner_id': user_id})
                         if business_obj:
                             user_obj['business_id'] = str(business_obj['_id'])
+                            user_obj['business_details'] = business_data_dict[str(business_obj['_id'])]
                     if user_obj['user_type'] == EMPLOYEE:
                         employee_obj = employee_collection.find_one({'user_id': user_id})
                         if employee_obj:
                             user_obj['employee_id'] = str(employee_obj['_id'])
+                            user_obj['employee_details'] = employee_dict[str(employee_obj['_id'])]
 
                 token = create_jwt_token(user_id)
                 return_data = {

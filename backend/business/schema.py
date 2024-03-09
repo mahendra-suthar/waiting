@@ -22,6 +22,7 @@ class RegisterBusiness(BaseModel):
     phone_verify: bool = False
     owner_id: str
     qr_code: str = None
+    schedule_list: list = []
 
     class Config:
         from_attributes = True

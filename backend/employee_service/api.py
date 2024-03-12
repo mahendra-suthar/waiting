@@ -4,11 +4,13 @@ from fastapi.routing import APIRouter
 from typing import Any
 
 from ..utils import success_response, prepare_dropdown_data
-from .schema import RegisterEmployeeService, EmployeeServiceData
+from .schema import RegisterEmployeeService, EmployeeServiceData, EmployeeServiceName
 from ..queries import insert_item, prepare_item_list
 
 router = APIRouter()
 employee_service_collection = 'employee_service'
+service_collection = 'service'
+employee_collection = 'employee'
 
 
 @router.post("/v1/employee_service", response_description="Add new Employee Service")
@@ -38,6 +40,35 @@ def get_service(
         'search_string': search_string
     }
     response_data = prepare_item_list(data_dict)
+    status_code = response_data.get("status")
+    return JSONResponse(content=response_data, status_code=status_code)
+
+
+@router.get("/v1/employee_list/{service_id}", response_description="Get Employee List")
+def get_employee_list(
+        service_id: str
+) -> Any:
+    """
+    Get Category List API
+    """
+    employee_list_dict = {
+        'collection_name': employee_collection,
+        'schema': ['email', 'phone_number', 'country_code'],
+    }
+    employee_response = prepare_item_list(employee_list_dict)
+    employee_dict = {employee['_id']: {**employee} for employee in employee_response.get('data', []) if employee}
+
+    data_dict = {
+        'collection_name': employee_service_collection,
+        'schema': EmployeeServiceName,
+        'filters': {'service_id': service_id}
+    }
+    response_data = prepare_item_list(data_dict)
+    data = response_data.get("data", [])
+    for emp in data:
+        emp['employee'] = employee_dict.get(emp['employee_id'], {})
+
+    response_data['data'] = data
     status_code = response_data.get("status")
     return JSONResponse(content=response_data, status_code=status_code)
 

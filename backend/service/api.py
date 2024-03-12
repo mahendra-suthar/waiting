@@ -53,11 +53,15 @@ def get_service(
 
 @router.get("/v1/service_dropdown_data",
             response_description="get service dropdown data")
-async def user_dropdown():
+async def user_dropdown(business_id: str = None):
     """
     get service dropdown data
     """
-    data_list = prepare_dropdown_data(collection_name=service_collection, label='name', value='_id')
+    data_list = prepare_dropdown_data(
+        collection_name=service_collection,
+        filters={'merchant_id': business_id},
+        label='name', value='_id'
+    )
     response_data = success_response(data=data_list, message="Successfully get data")
     status_code = response_data.get("status")
     return JSONResponse(content=response_data, status_code=status_code)

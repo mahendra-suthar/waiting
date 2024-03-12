@@ -7,6 +7,7 @@ import pyotp
 import random
 from datetime import datetime
 from twilio.rest import Client
+from typing import List
 from PIL import Image
 
 from config.config import TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
@@ -143,10 +144,19 @@ def prepare_dropdown_for_forms(collection_name: str, label: str, value: str):
         return []
 
 
-def prepare_dropdown_data(collection_name: str, label: str, value: str):
+def prepare_dropdown_data(
+        collection_name: str,
+        label: str,
+        value: str,
+        filters: dict = None
+) -> List:
     from .queries import generate_mongo_query
+    if filters is None:
+        filters = dict()
+
+    filters['is_deleted'] = False
     try:
-        query, projections = generate_mongo_query({'is_deleted': False}, projection_fields=[label, value])
+        query, projections = generate_mongo_query(filters, projection_fields=[label, value])
         database = client_db
         collection = database[collection_name]
         result = collection.find(query, projections)

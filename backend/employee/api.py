@@ -146,6 +146,30 @@ def current_users_appointments(employee_id: str, status: int) -> Any:
     return JSONResponse(content=response_data, status_code=201)
 
 
+# @router.get("/v1/get_employee_using_service", response_description="Get employee using service")
+# def current_users_appointments(service_id: str) -> Any:
+#     """
+#     Preparing employee list as per service
+#     """
+#     employee_list_dict = {
+#         'collection_name': employee_collection,
+#         'schema': ['merchant_id'],
+#         'filters': {'merchant_id': business_id}
+#     }
+#     employee_response = prepare_item_list(employee_list_dict)
+#     employee_list = [employee['_id'] for employee in employee_response.get('data', []) if employee]
+#
+#
+#     data = response_data.get("data")
+#     data_dict = {
+#         'queue_id': data.get("queue_id"),
+#         'status': status
+#     }
+#     data_dict = prepare_employee_queue_history_as_per_status(data_dict)
+#     response_data = success_response(data=data_dict['data'], message="Successfully get data")
+#     return JSONResponse(content=response_data, status_code=201)
+
+
 @router.get("/v1/employee/{employee_id}", response_description="Get employee")
 def get_employee_details(employee_id: str) -> Any:
     """
@@ -189,6 +213,9 @@ def get_employee_details(employee_id: str) -> Any:
 
     response_data['data'] = data
     return JSONResponse(content=response_data, status_code=status_code)
+
+
+
 
 # @router.put("/v1/employee", response_description="Update Employee")
 # def create_employee(employee: RegisterEmployee = Body(...)) -> Any:

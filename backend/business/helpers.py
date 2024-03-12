@@ -73,7 +73,7 @@ async def insert_business_request(business_dict: dict) -> str:
     user_id = business_dict.get('owner_id')
     if inserted_id and user_id:
         qr_file_path = generate_qr_code(str(inserted_id))
-        update_item(business_collection, str(inserted_id), {'qr_code': qr_file_path})
+        update_item(collection_name, str(inserted_id), {'qr_code': qr_file_path})
 
         update_item(user_collection, str(user_id), {'user_type': MERCHANT})
 

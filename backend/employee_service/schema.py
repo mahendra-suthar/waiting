@@ -41,3 +41,8 @@ class EmployeeServiceData(BaseModel):
     end_time: int
     duration: int
 
+
+class EmployeeServiceName(BaseModel):
+    _id: str
+    service_id: str
+    employee_id: str

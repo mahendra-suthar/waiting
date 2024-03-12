@@ -79,8 +79,9 @@ async def insert_business_request(business_dict: dict) -> str:
 
         if schedule_list:
             for schedule in schedule_list:
+                print("------str(inserted_id)-------", str(inserted_id))
                 business_data = RegisterBusinessSchedule(
-                    merchant_id=inserted_id,
+                    merchant_id=str(inserted_id),
                     day_of_week=schedule.get('day_of_week'),
                     opening_time=schedule.get('opening_time'),
                     closing_time=schedule.get('closing_time'),

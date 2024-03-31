@@ -6,7 +6,7 @@ from ..queries import prepare_item_list, get_item_list, get_item, update_item, u
 from ..constants import (QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS, queue_user_status_choices,
                          QUEUE_USER_FAILED, QUEUE_USER_CANCELLED)
 from ..websocket import waiting_list_manager
-from config.database import client_db
+from ..utils import get_current_date_str
 
 queue_user_collection = 'queue_user'
 queue_collection = 'queue'
@@ -76,7 +76,7 @@ def get_queue_using_service(data_dict):
     return queue_id
 
 
-def update_queue(user_id, queue_id):
+def update_queue(user_id, queue_id, date_str=None):
     if user_id:
         data_dict = {
             'collection_name': queue_user_collection,
@@ -88,11 +88,12 @@ def update_queue(user_id, queue_id):
         #     data_dict['current_user'] = str(user_id)
         update_item(queue_collection, queue_id, data_dict)
         waiting_list_manager.load_waiting_list_from_volume()
-        waiting_list_manager.add_customer(queue_id, str(user_id))
+        waiting_list_manager.add_customer(queue_id, str(user_id), date_str)
 
 
 def prepare_next_user(queue_id):
-    waiting_list = waiting_list_manager.get_waiting_list(queue_id)
+    date_str = get_current_date_str()
+    waiting_list = waiting_list_manager.get_waiting_list(queue_id, date_str)
     current_user = waiting_list[0] if len(waiting_list) > 0 else None
     next_user = waiting_list[1] if len(waiting_list) > 1 else None
     print("=====current_user==1===", current_user)
@@ -102,7 +103,8 @@ def prepare_next_user(queue_id):
     return_data = update_items(queue_user_collection, match_dict, data_dict)
     if return_data:
         print("=====message=current_user=====", return_data['message'])
-        waiting_list_manager.remove_customer(current_user)
+        date_str = get_current_date_str()
+        waiting_list_manager.remove_customer(current_user, date_str)
 
     print("=====next_user==1===", next_user)
     match_dict = {'user_id': next_user, 'queue_id': queue_id}
@@ -111,7 +113,7 @@ def prepare_next_user(queue_id):
     return_data = update_items(queue_user_collection, match_dict, data_dict)
     if return_data:
         print("=====message=next_user=====", return_data['message'])
-        waiting_list_manager.add_customer(next_user)
+        waiting_list_manager.add_customer(queue_id, next_user, date_str)
 
     return {'next_user': next_user}
 
@@ -185,7 +187,8 @@ def get_queue_user_filtered_data(user_id: str, status_list: list) -> list:
     registered_data = registered_list.get('data', [])
     for data in registered_data:
         data['queue_details'] = business_dict[data['queue_id']]
-        waiting_list = waiting_list_manager.get_waiting_list(data['queue_id'])
+        date_str = get_current_date_str()
+        waiting_list = waiting_list_manager.get_waiting_list(data['queue_id'], date_str)
         data['place_in_queue'] = waiting_list.index(data['user_id']) if data['user_id'] in waiting_list else 0
     return registered_data
 

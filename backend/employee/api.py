@@ -5,10 +5,11 @@ from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any, Optional
 
+from config.database import client_db
 from ..utils import success_response, generate_qr_code
 from .schema import RegisterEmployee, EmployeeData
 from ..queries import insert_item, prepare_item_list, filter_data, update_item, get_item, get_item_list
-from ..constants import EMPLOYEE
+from ..constants import EMPLOYEE, queue_user_status_choices
 from ..auth.helpers import JWTBearer
 from .helpers import prepare_employee_queue_history, prepare_employee_queue_history_as_per_status
 
@@ -17,6 +18,7 @@ employee_collection = 'employee'
 user_collection = 'users'
 business_collection = 'business'
 queue_collection = 'queue'
+queue_user_collection = 'queue_user'
 
 
 @router.post("/v1/employee", response_description="Add new Employee")
@@ -215,6 +217,33 @@ def get_employee_details(employee_id: str) -> Any:
     return JSONResponse(content=response_data, status_code=status_code)
 
 
+@router.get("/v1/employee_queue_status_count/{queue_id}", response_description="Get employee queue status count")
+def get_employee_queue_status_count(queue_id: str) -> Any:
+    """
+    Get employee queue status count
+    """
+    pipeline = [
+        {
+            "$match": {
+                "is_deleted": False,
+                "queue_id": queue_id
+            }
+        },
+        {
+            "$group": {
+                "_id": "$status",
+                "queue_user": {"$sum": 1}
+            }
+        }
+    ]
+    grouped_queue_user = client_db[queue_user_collection].aggregate(pipeline)
+    queue_user_status_dict = dict(queue_user_status_choices)
+    status_count_dict = {
+        queue_user_status_dict[queue['_id']]: queue.get('queue_user')
+        for queue in grouped_queue_user
+    }
+    response_data = success_response(data={'status_count_dict': status_count_dict}, message="Successfully get data")
+    return JSONResponse(content=response_data, status_code=200)
 
 
 # @router.put("/v1/employee", response_description="Update Employee")

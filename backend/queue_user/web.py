@@ -9,7 +9,7 @@ from .helpers import jinja_variables_for_queue_user, update_queue
 from ..forms import QueueUserForm
 from .schema import RegisterQueueUser, UpdateQueueUser
 from ..queries import insert_item, filter_data
-from ..utils import get_current_timestamp_utc
+from ..utils import get_current_timestamp_utc, get_current_date_str
 from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_IN_PROGRESS
 
 
@@ -71,6 +71,7 @@ async def save_queue_form(
     request: Request,
     user_id: str = Form(...),
     queue_id: str = Form(...),
+    queue_date: Optional[int] = Form(0),
     priority: bool = Form(False),
     enqueue_time: Optional[int] = Form(0),
     dequeue_time: Optional[int] = Form(0),
@@ -78,6 +79,7 @@ async def save_queue_form(
     form = QueueUserForm(request=request)
     form.user_id.data = user_id
     form.queue_id.data = queue_id
+    form.queue_date.data = queue_date
     form.priority.data = priority
     form.enqueue_time.data = enqueue_time
     form.dequeue_time.data = dequeue_time
@@ -87,6 +89,7 @@ async def save_queue_form(
         item_data = RegisterQueueUser(
             user_id=user_id,
             queue_id=queue_id,
+            queue_date=queue_date,
             priority=priority,
             enqueue_time=get_current_timestamp_utc(),
             dequeue_time=dequeue_time,
@@ -107,7 +110,8 @@ async def save_queue_form(
             if q_user_obj:
                 raise HTTPException(status_code=400, detail="Data already exists")
         inserted_id = insert_item(queue_user_collection, data_dict)
-        update_queue(str(user_id), queue_id)
+        date_str = get_current_date_str(queue_date)
+        update_queue(str(user_id), queue_id, date_str)
         return RedirectResponse(
             "/web/queue_user", status_code=302
         )

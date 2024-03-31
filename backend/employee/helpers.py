@@ -3,6 +3,7 @@ from config.database import client_db
 from ..queries import prepare_item_list, get_item_list
 from ..constants import queue_user_status_choices, employee_status_choices
 from ..websocket import waiting_list_manager
+from ..utils import get_current_date_str
 
 employee_collection = 'employee'
 queue_user_collection = 'queue_user'
@@ -86,7 +87,8 @@ def prepare_employee_queue_history(employee_dict: dict):
             data_dict['queue_user_details'] = []
             for queue_user in group['queue_user']:
                 queue_id = queue_user['queue_id']
-                waiting_list = waiting_list_manager.get_waiting_list(queue_id)
+                date_str = get_current_date_str()
+                waiting_list = waiting_list_manager.get_waiting_list(queue_id, date_str)
                 queue_user['current_length'] = current_length
                 user_id = queue_user.get('user_id')
                 queue_users_dict = {
@@ -130,7 +132,8 @@ def prepare_employee_queue_history_as_per_status(employee_dict: dict):
         data_dict['queue_user_details'] = []
         for queue_user in queue_user_list:
             queue_id = queue_user['queue_id']
-            waiting_list = waiting_list_manager.get_waiting_list(queue_id)
+            date_str = get_current_date_str()
+            waiting_list = waiting_list_manager.get_waiting_list(queue_id, date_str)
             queue_user['current_length'] = current_length
             user_id = queue_user.get('user_id')
             queue_users_dict = {

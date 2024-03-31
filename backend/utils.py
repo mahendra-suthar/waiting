@@ -1,6 +1,7 @@
 import os
-from fastapi import UploadFile, File
+from fastapi import Response, Request
 from io import BytesIO
+import bcrypt
 import qrcode
 import qrcode.constants
 import pyotp
@@ -61,6 +62,24 @@ def temp_verify_otp(phone_number, otp_code):
     except Exception as e:
         log.error(f"Error while store OTP: {e}")
         return False
+
+
+# Function to hash a password
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed_password.decode('utf-8')
+
+# Function to verify a password against a hashed password
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+
+def save_cookies(response: Response, key, value):
+    response.set_cookie(key='access_token', value=value)
+
+def get_cookies(request: Request, key):
+    return request.cookies.get(key)
 
 
 # Function to generate and store OTP secret for a user
@@ -127,6 +146,17 @@ def send_otp_via_sms(phone_number, otp):
 def get_current_timestamp_utc():
     current_utc_timestamp = int(datetime.utcnow().timestamp())
     return current_utc_timestamp
+
+def get_current_date_str(utc_timestamp=None):
+    if not utc_timestamp:
+        utc_timestamp = get_current_timestamp_utc()
+
+    # Convert the UTC timestamp to a datetime object
+    utc_datetime = datetime.utcfromtimestamp(utc_timestamp)
+
+    # Format the datetime object as a string
+    formatted_date = utc_datetime.strftime("%d-%m-%Y")  # Change the format as needed
+    return formatted_date
 
 
 def prepare_dropdown_for_forms(collection_name: str, label: str, value: str):

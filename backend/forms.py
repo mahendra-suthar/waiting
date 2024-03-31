@@ -315,6 +315,7 @@ class QueueUserForm(StarletteForm):
             label='name',
             value='_id'
         ))
+    queue_date = IntegerField("Queue Date")
     priority = BooleanField("Priority")
     enqueue_time = IntegerField("Enqueue Time")
     dequeue_time = IntegerField("Dequeue Time")
@@ -423,3 +424,9 @@ class AttendanceForm(StarletteForm):
     date = IntegerField("Attendance Date")
     clock_in_time = IntegerField("Clock In Time")
     clock_out_time = IntegerField("Clock Out Time")
+
+
+
+class LoginForm(StarletteForm):
+    email = EmailField("Email")
+    password = StringField("Password")

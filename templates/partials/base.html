@@ -32,9 +32,12 @@
   </head>
   <body>
     <div class="container-fluid">
-      <div class="row">
-        {% include 'partials/sidebar.html' %} {% block content %} {% endblock %}
-      </div>
+          <div class="row">
+            {% if request.path not in ['/web/login', '/web/register'] %}
+                {% include 'partials/sidebar.html' %}
+            {% endif %}
+            {% block content %} {% endblock %}
+        </div>
     </div>
     <style
       src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"

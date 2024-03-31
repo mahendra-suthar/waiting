@@ -9,6 +9,7 @@ employee_collection = 'queue_user'
 class RegisterQueueUser(BaseModel):
     user_id: str
     queue_id: str
+    queue_date: int or None
     enqueue_time: int
     dequeue_time: int
     turn_time: Optional[int] = 0

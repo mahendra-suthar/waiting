@@ -4,7 +4,7 @@ from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
 
-from ..utils import success_response, get_current_timestamp_utc
+from ..utils import success_response, get_current_timestamp_utc, get_current_date_str
 from .schema import RegisterQueueUser
 from ..queries import insert_item, prepare_item_list, update_items, update_item, get_item, filter_data
 from .helpers import get_queue_using_service, update_queue, prepare_appointments_history
@@ -42,7 +42,8 @@ def create_queue_user(queue_user: RegisterQueueUser = Body(...)) -> Any:
             raise HTTPException(status_code=400, detail="Data already exists")
     data_inserted = insert_item(queue_user_collection, data_dict)
     if data_inserted:
-        update_queue(data_dict['user_id'], str(queue_id))
+        date_str = get_current_date_str(data_dict['queue_date'])
+        update_queue(data_dict['user_id'], str(queue_id), date_str)
     response_data = success_response(data={'employee_id': str(data_inserted)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 
@@ -55,7 +56,8 @@ def queue_next_user(queue_id: str) -> Any:
     if not queue_id:
         raise HTTPException(status_code=400, detail="Queue Id not exist")
 
-    waiting_list = waiting_list_manager.get_waiting_list(queue_id)
+    date_str = get_current_date_str()
+    waiting_list = waiting_list_manager.get_waiting_list(queue_id, date_str)
     # queue_data = get_item(
     #     collection_name=queue_collection,
     #     item_id=queue_id,
@@ -72,7 +74,8 @@ def queue_next_user(queue_id: str) -> Any:
         match_dict = {'user_id': current_user, 'queue_id': queue_id}
         return_data = update_items(queue_user_collection, match_dict, data_dict)
         if return_data:
-            waiting_list_manager.remove_customer(queue_id)
+            date_str = get_current_date_str()
+            waiting_list_manager.remove_customer(queue_id, date_str)
         if next_user:
             match_dict = {'user_id': next_user, 'queue_id': queue_id}
             data_dict = {'status': QUEUE_USER_IN_PROGRESS, 'turn_time': get_current_timestamp_utc()}
@@ -89,7 +92,7 @@ def queue_next_user(queue_id: str) -> Any:
                     'current_user': str(next_user)
                 }
                 update_item(queue_collection, queue_id, data_dict)
-            print("======[waiting-list]=======", waiting_list_manager.get_waiting_list(queue_id))
+            print("======[waiting-list]=======", waiting_list_manager.get_waiting_list(queue_id, get_current_date_str()))
             response_data = success_response(data=next_user, message="Successfully updated data")
         else:
             response_data = success_response(message="Next user not exist")

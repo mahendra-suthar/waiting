@@ -17,6 +17,7 @@ class RegisterUser(BaseModel):
     last_name: Optional[str] = None
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
+    password: Optional[str] = None
     address_id: Optional[str] = None
     # merchant_id: Optional[str] = None
     # employee_id: Optional[str] = None

@@ -36,6 +36,7 @@ from backend.leave_request.web import router as leave_web_router
 from backend.post.web import router as post_web_router
 from backend.leave_type.web import router as leave_type_web_router
 from backend.clock_in_out.web import router as clock_web_router
+from backend.auth.web import router as auth_web_router
 
 from backend.utils import error_response
 
@@ -83,6 +84,7 @@ app.include_router(leave_web_router, prefix="/web", tags=['LEAVE_REQUEST'])
 app.include_router(post_web_router, prefix="/web", tags=['POST'])
 app.include_router(leave_type_web_router, prefix="/web", tags=['LEAVE_TYPE'])
 app.include_router(clock_web_router, prefix="/web", tags=['ATTENDANCE'])
+app.include_router(auth_web_router, prefix="/web", tags=['AUTH'])
 
 
 @app.exception_handler(HTTPException)

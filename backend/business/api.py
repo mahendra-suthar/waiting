@@ -102,3 +102,6 @@ def get_business_details(business_id: str) -> Any:
         )
         data['category_details'] = category_data.get("data")
     return JSONResponse(content=response_data, status_code=status_code)
+
+
+

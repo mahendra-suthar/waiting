@@ -1,5 +1,13 @@
 DEFAULT_COUNTRY_CODE = '+91'
 
+Rendat_order = 1
+storage_order = 2
+
+order_type_choiced = (
+    (Rendat_order, "storage_order"),
+    (storage_order, "storage_order")
+)
+
 
 CUSTOMER = 1
 MERCHANT = 2

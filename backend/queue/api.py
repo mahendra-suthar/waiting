@@ -100,7 +100,7 @@ def make_blank_queue(queue_id: str) -> Any:
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("v1/get_business_queue_details/{business_id}",  response_description="Get Business Queue Details")
+@router.get("/v1/get_business_queue_details/{business_id}",  response_description="Get Business Queue Details")
 def get_business_queue_details(business_id: str):
     """
     Prepare Queue details as per business

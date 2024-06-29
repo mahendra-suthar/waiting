@@ -65,14 +65,15 @@ def verify_phone_otp_and_login(user):
                 business_dict = {
                     'collection_name': 'business',
                     'schema': ['name', 'category_id', 'phone', 'email', 'country_code', "address_id", 'about_business',
-                                'phone_number']
+                                'phone_number', 'qr_code']
                 }
                 business_response = prepare_item_list(business_dict)
                 business_list = business_response.get('data', [])
 
                 employee_list_dict = {
                     'collection_name': 'employee',
-                    'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id', 'queue_id'],
+                    'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id', 'queue_id',
+                               'qr_code'],
                 }
                 employees_response = prepare_item_list(employee_list_dict)
                 employee_list = employees_response.get('data', [])

@@ -55,6 +55,7 @@ async def save_business_form(
 ) -> Response:
     form = BusinessForm(request=request)
     form.category_id.choices = prepare_dropdown_for_forms(collection_name=category_collection, label='name', value='_id')
+    form.owner_id.choices = prepare_dropdown_for_forms(collection_name=user_collection, label='full_name', value='_id')
     form.name.data = name
     form.email.data = email
     form.password.data = password

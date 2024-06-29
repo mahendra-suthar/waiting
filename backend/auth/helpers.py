@@ -57,10 +57,9 @@ def verify_phone_otp_and_login(user):
             if temp_verify_otp(phone_number, otp):
                 user_obj = user_collection.find_one({'phone_number': phone_number})
                 if not user_obj:
-                    user_id = None
-                else:
-                    user_id = str(user_obj['_id'])
+                    raise HTTPException(status_code=400, detail="User does not exist")
 
+                user_id = str(user_obj['_id'])
                 user_obj['_id'] = user_id
 
                 business_dict = {
@@ -82,16 +81,14 @@ def verify_phone_otp_and_login(user):
                 employee_dict = {employee['_id']: {**employee} for employee in employee_list if employee}
 
                 if user_obj['user_type']:
-                    if user_obj['user_type'] == MERCHANT:
-                        business_obj = business_collection.find_one({'owner_id': user_id})
-                        if business_obj:
-                            user_obj['business_id'] = str(business_obj['_id'])
-                            user_obj['business_details'] = business_data_dict[str(business_obj['_id'])]
-                    if user_obj['user_type'] == EMPLOYEE:
-                        employee_obj = employee_collection.find_one({'user_id': user_id})
-                        if employee_obj:
-                            user_obj['employee_id'] = str(employee_obj['_id'])
-                            user_obj['employee_details'] = employee_dict[str(employee_obj['_id'])]
+                    business_obj = business_collection.find_one({'owner_id': user_id})
+                    if business_obj:
+                        user_obj['business_id'] = str(business_obj['_id'])
+                        user_obj['business_details'] = business_data_dict[str(business_obj['_id'])]
+                    employee_obj = employee_collection.find_one({'user_id': user_id})
+                    if employee_obj:
+                        user_obj['employee_id'] = str(employee_obj['_id'])
+                        user_obj['employee_details'] = employee_dict[str(employee_obj['_id'])]
 
                 token = create_jwt_token(user_id)
                 return_data = {
@@ -104,8 +101,7 @@ def verify_phone_otp_and_login(user):
         else:
             raise HTTPException(status_code=409, detail="Please enter valid phone number")
     except Exception as e:
-        log.error(f"Error while verify OTP for phone number: {e}")
-        raise HTTPException(status_code=500, detail="Error while verify OTP for phone number")
+        raise HTTPException(status_code=500, detail=f"Error while verify OTP for phone number")
 
 
 # Function to generate JWT token

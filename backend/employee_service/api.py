@@ -1,11 +1,12 @@
 from fastapi.responses import JSONResponse
-from fastapi import Body, HTTPException
+from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
 
 from ..utils import success_response, prepare_dropdown_data
 from .schema import RegisterEmployeeService, EmployeeServiceData, EmployeeServiceName
 from ..queries import insert_item, prepare_item_list
+from ..auth.helpers import JWTBearer
 
 router = APIRouter()
 employee_service_collection = 'employee_service'
@@ -14,16 +15,16 @@ employee_collection = 'employee'
 
 
 @router.post("/v1/employee_service", response_description="Add new Employee Service")
-def create_service(service: RegisterEmployeeService = Body(...)) -> Any:
+def create_service(service: RegisterEmployeeService = Body(...), current_user: str = Depends(JWTBearer())) -> Any:
     """
     Register Service API
     """
-    inserted_id = insert_item(employee_service_collection, service)
+    inserted_id = insert_item(employee_service_collection, service, current_user)
     response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/employee_service", response_description="Get Service List")
+@router.get("/v1/employee_service", response_description="Get Service List", dependencies=[Depends(JWTBearer())])
 def get_service(
         page_number: int = 1,
         page_size: int = 10,
@@ -44,7 +45,9 @@ def get_service(
     return JSONResponse(content=response_data, status_code=status_code)
 
 
-@router.get("/v1/employee_list/{service_id}", response_description="Get Employee List")
+@router.get("/v1/employee_list/{service_id}",
+            response_description="Get Employee List",
+            dependencies=[Depends(JWTBearer())])
 def get_employee_list(
         service_id: str
 ) -> Any:
@@ -74,7 +77,8 @@ def get_employee_list(
 
 
 @router.get("/v1/employee_service_dropdown_data",
-            response_description="get service dropdown data")
+            response_description="get service dropdown data",
+            dependencies=[Depends(JWTBearer())])
 async def user_dropdown():
     """
     get service dropdown data

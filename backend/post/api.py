@@ -1,27 +1,28 @@
 from fastapi.responses import JSONResponse
-from fastapi import Body, HTTPException
+from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
 
 from ..utils import success_response, prepare_dropdown_data
 from .schema import RegisterPost, PostData
 from ..queries import insert_item, prepare_item_list
+from ..auth.helpers import JWTBearer
 
 router = APIRouter()
 post_collection = 'post'
 
 
 @router.post("/v1/post", response_description="Post")
-def create_post(post: RegisterPost = Body(...)) -> Any:
+def create_post(post: RegisterPost = Body(...), current_user: str = Depends(JWTBearer())) -> Any:
     """
     Register Business Post API
     """
-    inserted_id = insert_item(post_collection, post)
+    inserted_id = insert_item(post_collection, post, current_user)
     response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/post", response_description="Get post List")
+@router.get("/v1/post", response_description="Get post List", dependencies=[Depends(JWTBearer())])
 def get_service(
         page_number: int = 1,
         page_size: int = 10,

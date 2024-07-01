@@ -1,11 +1,12 @@
 from fastapi.responses import JSONResponse
-from fastapi import Body, HTTPException
+from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
 
 from ..utils import success_response, prepare_dropdown_data
 from .schema import RegisterService, ServiceData
 from ..queries import insert_item, prepare_item_list, get_item_list
+from ..auth.helpers import JWTBearer
 
 router = APIRouter()
 service_collection = 'service'
@@ -13,16 +14,16 @@ business_collection = 'business'
 
 
 @router.post("/v1/service", response_description="Add new Business Service")
-def create_service(service: RegisterService = Body(...)) -> Any:
+def create_service(service: RegisterService = Body(...), current_user: str = Depends(JWTBearer())) -> Any:
     """
     Register Service API
     """
-    inserted_id = insert_item(service_collection, service)
+    inserted_id = insert_item(service_collection, service, current_user)
     response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/service", response_description="Get Service List")
+@router.get("/v1/service", response_description="Get Service List", dependencies=[Depends(JWTBearer())])
 def get_service(
         page_number: int = 1,
         page_size: int = 10,
@@ -52,7 +53,8 @@ def get_service(
 
 
 @router.get("/v1/service_dropdown_data",
-            response_description="get service dropdown data")
+            response_description="get service dropdown data",
+            dependencies=[Depends(JWTBearer())])
 async def user_dropdown(business_id: str = None):
     """
     get service dropdown data

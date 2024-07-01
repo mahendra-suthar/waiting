@@ -22,7 +22,7 @@ queue_user_collection = 'queue_user'
 
 
 @router.post("/v1/employee", response_description="Add new Employee")
-def create_employee(employee: RegisterEmployee = Body(...)) -> Any:
+def create_employee(employee: RegisterEmployee = Body(...), current_user: str = Depends(JWTBearer())) -> Any:
     """
     Register employee api
     """
@@ -51,7 +51,7 @@ def create_employee(employee: RegisterEmployee = Body(...)) -> Any:
             raise HTTPException(status_code=400, detail="User not found")
 
     employee_data['qr_code'] = None
-    inserted_employee = insert_item(employee_collection, employee_data)
+    inserted_employee = insert_item(employee_collection, employee_data, current_user)
 
     if inserted_employee and user_id:
         update_item(user_collection, str(user_id), {'user_type': EMPLOYEE})
@@ -62,7 +62,7 @@ def create_employee(employee: RegisterEmployee = Body(...)) -> Any:
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/employee", response_description="Get all employees")
+@router.get("/v1/employee", response_description="Get all employees", dependencies=[Depends(JWTBearer())])
 async def get_employees(
         page_number: int = 1,
         page_size: int = 10,

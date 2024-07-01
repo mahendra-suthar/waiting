@@ -1,16 +1,17 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, Body
 from bson import ObjectId
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from typing import Any
 
 from ..utils import success_response, get_current_timestamp_utc, get_current_date_str
-from ..queries import prepare_item_list, update_items, get_item
+from ..queries import prepare_item_list, update_items, get_item, insert_item
 from ..websocket import waiting_list_manager
 from config.database import client_db
 from ..constants import QUEUE_USER_IN_PROGRESS, QUEUE_RUNNING_STOP, QUEUE_RUNNING_START, QUEUE_USER_COMPLETED, \
     queue_user_status_choices
-from .schema import QueueData
+from .schema import RegisterQueue
+from ..auth.helpers import JWTBearer
 
 router = APIRouter()
 queue_user_collection = 'queue_user'
@@ -19,7 +20,17 @@ employee_collection = 'employee'
 user_collection = 'users'
 
 
-@router.get("/v1/start_queue/{queue_id}", response_description="Start queue")
+@router.post("/v1/queue", response_description="Create Queue")
+def create_queue(queue_data: RegisterQueue = Body(...), current_user: str = Depends(JWTBearer())) -> Any:
+    """
+    Register Queue Post API
+    """
+    inserted_id = insert_item(queue_collection, queue_data, current_user)
+    response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
+    return JSONResponse(content=response_data, status_code=201)
+
+
+@router.get("/v1/start_queue/{queue_id}", response_description="Start queue", dependencies=[Depends(JWTBearer())])
 def start_queue(queue_id: str) -> Any:
     """
     Start Queue
@@ -52,7 +63,7 @@ def start_queue(queue_id: str) -> Any:
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/stop_queue/{queue_id}", response_description="Stop queue")
+@router.get("/v1/stop_queue/{queue_id}", response_description="Stop queue", dependencies=[Depends(JWTBearer())])
 def start_queue(queue_id: str) -> Any:
     """
     Stop Queue
@@ -69,7 +80,9 @@ def start_queue(queue_id: str) -> Any:
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.delete("/v1/blank_queue/{queue_id}", response_description="Remove queue user")
+@router.delete("/v1/blank_queue/{queue_id}",
+               response_description="Remove queue user",
+               dependencies=[Depends(JWTBearer())])
 def make_blank_queue(queue_id: str) -> Any:
     """
     Register Queue user
@@ -82,14 +95,11 @@ def make_blank_queue(queue_id: str) -> Any:
     data_list = queue_user_list.get('data', [])
 
     for data in data_list:
-        # Example data with '_id' field
         data = {"_id": ObjectId(data['_id'])}
-
-        # Get the collection
-        queue_user_collection = client_db['queue_user']
+        queue_user_client = client_db['queue_user']
 
         # Use delete_one method to delete a document
-        queue_user_collection.delete_one({"_id": data["_id"]})
+        queue_user_client.delete_one({"_id": data["_id"]})
 
     date_str = get_current_date_str()
     waiting_list = waiting_list_manager.get_waiting_list(queue_id, date_str)
@@ -100,7 +110,9 @@ def make_blank_queue(queue_id: str) -> Any:
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/get_business_queue_details/{business_id}",  response_description="Get Business Queue Details")
+@router.get("/v1/get_business_queue_details/{business_id}",
+            response_description="Get Business Queue Details",
+            dependencies=[Depends(JWTBearer())])
 def get_business_queue_details(business_id: str):
     """
     Prepare Queue details as per business

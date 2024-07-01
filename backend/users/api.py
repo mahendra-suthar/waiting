@@ -33,11 +33,12 @@ async def create_user(user: RegisterUser = Body(...)) -> Any:
 
 
 @router.put("/v1/user/{user_id}", response_description="Update User Profile", response_model=User)
-async def update_user(user_id: str, user: UpdateUser = Body(...)) -> Any:
+async def update_user(user_id: str, user: UpdateUser = Body(...), current_user: str = Depends(JWTBearer())) -> Any:
     """
     Update User Profile
     """
     user_data = jsonable_encoder(user)
+    user_data['updated_by'] = current_user
     response_data = await update_user_request(user_id, user_data)
     status_code = response_data.get("status")
     return JSONResponse(content=response_data, status_code=status_code)
@@ -54,7 +55,10 @@ async def update_user(user_id: str, user: UpdateUser = Body(...)) -> Any:
 #     return JSONResponse(content=response_data, status_code=status_code)
 
 
-@router.get("/v1/user/{user_id}", response_description="Get User details", response_model=User)
+@router.get("/v1/user/{user_id}",
+            response_description="Get User details",
+            response_model=User,
+            dependencies=[Depends(JWTBearer())])
 async def get_user(user_id: str) -> Any:
     """
     Get User details
@@ -118,7 +122,8 @@ async def update_user_profile(current_user: str = Depends(JWTBearer()), user: Up
 
 @router.get("/v1/user_dropdown_data",
             response_description="get user dropdown data",
-            response_model=User)
+            response_model=User,
+            dependencies=[Depends(JWTBearer())])
 async def user_dropdown():
     """
     get user dropdown data

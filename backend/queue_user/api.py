@@ -18,7 +18,7 @@ queue_collection = 'queue'
 
 
 @router.post("/v1/queue_user", response_description="Add new queue user")
-def create_queue_user(queue_user: RegisterQueueUser = Body(...)) -> Any:
+def create_queue_user(queue_user: RegisterQueueUser = Body(...), current_user: str = Depends(JWTBearer())) -> Any:
     """
     Register Queue user
     """
@@ -40,7 +40,7 @@ def create_queue_user(queue_user: RegisterQueueUser = Body(...)) -> Any:
         print("q_user_obj", q_user_obj)
         if q_user_obj:
             raise HTTPException(status_code=400, detail="Data already exists")
-    data_inserted = insert_item(queue_user_collection, data_dict)
+    data_inserted = insert_item(queue_user_collection, data_dict, current_user)
     if data_inserted:
         date_str = get_current_date_str(data_dict['queue_date'])
         update_queue(data_dict['user_id'], str(queue_id), date_str)
@@ -49,7 +49,7 @@ def create_queue_user(queue_user: RegisterQueueUser = Body(...)) -> Any:
 
 
 @router.post("/v1/next_user/{queue_id}", response_description="Next User")
-def queue_next_user(queue_id: str) -> Any:
+def queue_next_user(queue_id: str, auth_user: str = Depends(JWTBearer())) -> Any:
     """
     Next User
     """
@@ -58,14 +58,6 @@ def queue_next_user(queue_id: str) -> Any:
 
     date_str = get_current_date_str()
     waiting_list = waiting_list_manager.get_waiting_list(queue_id, date_str)
-    # queue_data = get_item(
-    #     collection_name=queue_collection,
-    #     item_id=queue_id,
-    #     columns=['_id', 'current_user']
-    # )
-    # current_user = queue_data.get('data', {}).get('current_user', None)
-    # print("=----------current_user-----------", current_user)
-    # if current_user:
     current_user = waiting_list[0] if len(waiting_list) > 0 else None
     next_user = waiting_list[1] if len(waiting_list) > 1 else None
     data_dict = {'status': QUEUE_USER_COMPLETED, "dequeue_time": get_current_timestamp_utc()}
@@ -92,32 +84,11 @@ def queue_next_user(queue_id: str) -> Any:
                     'current_user': str(next_user)
                 }
                 update_item(queue_collection, queue_id, data_dict)
-            print("======[waiting-list]=======", waiting_list_manager.get_waiting_list(queue_id, get_current_date_str()))
             response_data = success_response(data=next_user, message="Successfully updated data")
         else:
             response_data = success_response(message="Next user not exist")
     else:
         response_data = success_response(message="Current user not exist")
-
-    # else:
-    #     current_user = waiting_list[0] if len(waiting_list) > 0 else None
-    #     match_dict = {'user_id': current_user, 'queue_id': queue_id}
-    #     data_dict = {'status': QUEUE_USER_IN_PROGRESS}
-    #     return_data = update_items(queue_user_collection, match_dict, data_dict)
-    #     if return_data and current_user and queue_id:
-    #         data_dict = {
-    #             'collection_name': queue_user_collection,
-    #             'filters': {'is_deleted': False, 'queue_id': queue_id,
-    #                         'status': {'$in': [int(QUEUE_USER_REGISTERED), int(QUEUE_USER_IN_PROGRESS)]}}
-    #         }
-    #         current_length = len(prepare_item_list(data_dict).get('data'))
-    #         data_dict = {
-    #             'current_length': current_length,
-    #             'current_user': str(current_user)
-    #         }
-    #         update_item(queue_collection, queue_id, data_dict)
-    #     print("======[waiting-list]=======", waiting_list_manager.get_waiting_list(queue_id))
-    #     response_data = success_response(data=current_user, message="Successfully updated data")
     return JSONResponse(content=response_data, status_code=201)
 
 

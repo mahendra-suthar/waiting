@@ -1,5 +1,5 @@
 from fastapi.responses import JSONResponse
-from fastapi import Body, HTTPException
+from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
 from fastapi.encoders import jsonable_encoder
@@ -8,6 +8,7 @@ from ..utils import success_response, prepare_dropdown_data
 from .schema import RegisterLeaveRequest, LeaveRequestData, LeaveRequestActions
 from ..queries import insert_item, prepare_item_list, update_item, get_item_list
 from ..constants import LEAVE_REJECTED
+from ..auth.helpers import JWTBearer
 
 router = APIRouter()
 leave_collection = 'leave'
@@ -16,16 +17,17 @@ employee_collection = 'employee'
 
 
 @router.post("/v1/leave_request", response_description="Leave Request")
-def create_leave_request(leave_request: RegisterLeaveRequest = Body(...)) -> Any:
+def create_leave_request(leave_request: RegisterLeaveRequest = Body(...),
+                         current_user: str = Depends(JWTBearer())) -> Any:
     """
     Register Leave Request API
     """
-    inserted_id = insert_item(leave_collection, leave_request)
+    inserted_id = insert_item(leave_collection, leave_request, current_user)
     response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/leave_request", response_description="Get Leave Request List")
+@router.get("/v1/leave_request", response_description="Get Leave Request List", dependencies=[Depends(JWTBearer())])
 def get_leave_request_list(
         page_number: int = 1,
         page_size: int = 10,
@@ -65,7 +67,9 @@ def get_leave_request_list(
     return JSONResponse(content=response_data, status_code=status_code)
 
 
-@router.get("/v1/leave_request/{business_id}", response_description="Get Business leave request")
+@router.get("/v1/leave_request/{business_id}",
+            response_description="Get Business leave request",
+            dependencies=[Depends(JWTBearer())])
 def get_business_leave_request_list(
         page_number: int = 1,
         page_size: int = 10,
@@ -109,11 +113,12 @@ def get_business_leave_request_list(
 def approve_or_reject_leave_request(
         leave_id: str,
         updated_data: LeaveRequestActions = Body(...),
+        current_user: str = Depends(JWTBearer())
 ) -> Any:
     """
     Actions on Leave Request List API
     """
     updated_dict = jsonable_encoder(updated_data)
-    response_data = update_item(leave_collection, item_id=leave_id, item_data=updated_dict)
+    response_data = update_item(leave_collection, item_id=leave_id, item_data=updated_dict, updated_by=current_user)
     status_code = response_data.get("status")
     return JSONResponse(content=response_data, status_code=status_code)

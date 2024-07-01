@@ -1,5 +1,5 @@
 from fastapi.responses import JSONResponse
-from fastapi import Body, HTTPException
+from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
 from fastapi.encoders import jsonable_encoder
@@ -8,6 +8,7 @@ from ..utils import success_response, prepare_dropdown_data
 from .schema import RegisterLeaveType, RegisterLeaveBalance, LeaveTypeData, LeaveBalanceData
 from ..queries import insert_item, prepare_item_list, update_item
 from ..constants import LEAVE_REJECTED
+from ..auth.helpers import JWTBearer
 
 router = APIRouter()
 leave_type_collection = 'leave_type'
@@ -15,16 +16,16 @@ leave_balance_collection = 'leave_balance'
 
 
 @router.post("/v1/leave_type", response_description="Leave Type")
-def create_leave_request(leave_type: RegisterLeaveType = Body(...)) -> Any:
+def create_leave_request(leave_type: RegisterLeaveType = Body(...), current_user: str = Depends(JWTBearer())) -> Any:
     """
     Register Leave Type API
     """
-    inserted_id = insert_item(leave_type_collection, leave_type)
+    inserted_id = insert_item(leave_type_collection, leave_type, current_user)
     response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/leave_type", response_description="Get Leave Type List")
+@router.get("/v1/leave_type", response_description="Get Leave Type List", dependencies=[Depends(JWTBearer())])
 def get_service(
         page_number: int = 1,
         page_size: int = 10,
@@ -47,16 +48,17 @@ def get_service(
 
 # Leave Balance
 @router.post("/v1/leave_balance", response_description="Leave Balance")
-def create_leave_balance(leave_balance: RegisterLeaveBalance = Body(...)) -> Any:
+def create_leave_balance(leave_balance: RegisterLeaveBalance = Body(...),
+                         current_user: str = Depends(JWTBearer())) -> Any:
     """
     Register Leave Balance API
     """
-    inserted_id = insert_item(leave_balance_collection, leave_balance)
+    inserted_id = insert_item(leave_balance_collection, leave_balance, current_user)
     response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)
 
 
-@router.get("/v1/leave_balance", response_description="Get Leave Balance List")
+@router.get("/v1/leave_balance", response_description="Get Leave Balance List", dependencies=[Depends(JWTBearer())])
 def get_leave_balance(
         page_number: int = 1,
         page_size: int = 10,

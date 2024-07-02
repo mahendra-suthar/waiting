@@ -73,7 +73,7 @@ def verify_phone_otp_and_login(user):
                 employee_list_dict = {
                     'collection_name': 'employee',
                     'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id', 'queue_id',
-                               'qr_code'],
+                               'qr_code', 'merchant_id'],
                 }
                 employees_response = prepare_item_list(employee_list_dict)
                 employee_list = employees_response.get('data', [])

@@ -90,6 +90,7 @@ def verify_phone_otp_and_login(user):
                     if employee_obj:
                         user_obj['employee_id'] = str(employee_obj['_id'])
                         user_obj['employee_details'] = employee_dict[str(employee_obj['_id'])]
+                        user_obj['employee_business'] = business_dict.get(employee_obj.get('merchant_id'), None)
 
                 token = create_jwt_token(user_id)
                 return_data = {

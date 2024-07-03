@@ -8,12 +8,14 @@ from ..utils import success_response
 from .schema import RegisterBusiness, UpdateBusiness, BusinessData
 from .helpers import (insert_business_request, update_business_request, prepare_category_wise_business_list,
                       prepare_business_details_with_employee_queue)
-from ..queries import prepare_item_list, get_item
+from ..queries import prepare_item_list, get_item, get_item_list
 from ..auth.helpers import JWTBearer
+from ..constants import days_of_week_choices
 
 router = APIRouter()
 business_collection = 'business'
 category_collection = 'category'
+business_schedule_collection = 'business_schedule'
 
 
 @router.post("/v1/business", response_description="Add new Business")
@@ -78,7 +80,7 @@ def get_category_wise_business_list() -> Any:
             dependencies=[Depends(JWTBearer())])
 def get_category_wise_business_list(business_id: str) -> Any:
     """
-    Get category wise business api
+    Get business with employee queue count
     """
     data_dict = {
         'business_id': business_id
@@ -101,6 +103,17 @@ def get_business_details(business_id: str) -> Any:
     status_code = response_data.get("status")
     data = response_data.get("data")
     category_id = data.get("category_id")
+    business_schedule = get_item_list(
+        collection_name=business_schedule_collection,
+        columns=['day_of_week', 'opening_time', 'closing_time']
+    )
+    week_day_dict = dict(days_of_week_choices)
+    business_schedule = business_schedule.get('data', [])
+    business_schedule = [
+        {**business, 'day_of_week': week_day_dict.get(business.get('day_of_week'))} for business in business_schedule
+        if business
+    ]
+    data['business_schedule'] = business_schedule
     if category_id:
         category_data = get_item(
             collection_name=category_collection,

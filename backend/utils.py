@@ -202,6 +202,10 @@ def prepare_static_choice_dropdown(choices):
     choice_list = [(None, 'Select Item...')] + choice_list
     return choice_list
 
+# def prepare_static_choice_dict(choices):
+#     choice_list = [(int(value), label) for value, label in choices]
+#     return choice_list
+
 
 # async def save_uploaded_file(img: any) -> str:
 #     file_name = f"qr_{get_current_timestamp_utc()}.png"

@@ -77,6 +77,7 @@ async def save_business_form(
             about_business=about_business,
             category_id=category_id,
             status=1,
+            is_open=False,
             owner_id=owner_id
         )
         business_data_dict = jsonable_encoder(business_data)

@@ -8,7 +8,7 @@ from ..queries import insert_item, update_item, get_item, get_item_list, filter_
 from .schema import BusinessData
 from ..business_schedule.schema import RegisterBusinessSchedule
 from ..utils import success_response, generate_qr_code
-from ..constants import MERCHANT, business_status_choices
+from ..constants import MERCHANT, business_status_choices, days_of_week_choices
 
 
 collection_name = 'business'
@@ -201,10 +201,23 @@ def prepare_business_details_with_employee_queue(data_dict):
         } for employee in employee_list if employee]
 
         category_name = category_details.get("name") if category_details else None
+
+        business_schedule = get_item_list(
+            collection_name=business_schedule_collection,
+            columns=['day_of_week', 'opening_time', 'closing_time']
+        )
+        week_day_dict = dict(days_of_week_choices)
+        business_schedule = business_schedule.get('data', [])
+        business_schedule = [
+            {**business, 'day_of_week': week_day_dict.get(business.get('day_of_week'))} for business in
+            business_schedule
+            if business
+        ]
         business_details = {
             **business_details,
             'category_name': category_name,
-            "employees": employee_list
+            'business_schedule': business_schedule,
+            "employees": employee_list,
         }
     return success_response(data=business_details, message='Data get successfully')
 

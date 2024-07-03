@@ -53,8 +53,6 @@ def insert_item(
     item_data: any = None,
     created_by: any = None
 ) -> Any:
-<<<<<<< Updated upstream
-=======
     collection = client_db[collection_name]
     if not item_data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item data not found")
@@ -80,7 +78,6 @@ def insert_item(
     item_data['updated_by'] = None
     item_data['updated_at'] = get_current_timestamp_utc()
     item_data['is_deleted'] = False
->>>>>>> Stashed changes
     try:
         collection = client_db[collection_name]
         if not item_data:

@@ -90,6 +90,9 @@ def verify_phone_otp_and_login(user):
                     if employee_obj:
                         user_obj['employee_id'] = str(employee_obj['_id'])
                         user_obj['employee_details'] = employee_dict[str(employee_obj['_id'])]
+                        user_obj['employee_details']['employee_business'] = business_data_dict.get(
+                            employee_obj.get('merchant_id'), None
+                        )
 
                 token = create_jwt_token(user_id)
                 return_data = {
@@ -102,6 +105,7 @@ def verify_phone_otp_and_login(user):
         else:
             raise HTTPException(status_code=409, detail="Please enter valid phone number")
     except Exception as e:
+        log.error(f"Error while verifying OTP: {e}")
         raise HTTPException(status_code=500, detail=f"Error while verify OTP for phone number")
 
 

@@ -32,11 +32,55 @@ def filter_data(
     #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
 
 
+# def filter_data_dict(
+#     collection_name: str = None,
+#     filter_dict: dict = None
+# ) -> Any:
+#     # try:
+#     collection = client_db[collection_name]
+#     if not filter_dict:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="filter dict not found")
+#
+#     if not filter_dict.get('is_deleted'):
+#         filter_dict['is_deleted'] = False
+#
+#     result = collection.find_one(filter_dict)
+#     return result
+
+
 def insert_item(
     collection_name: str = None,
     item_data: any = None,
     created_by: any = None
 ) -> Any:
+<<<<<<< Updated upstream
+=======
+    collection = client_db[collection_name]
+    if not item_data:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item data not found")
+
+    if not isinstance(item_data, dict):
+        item_data = jsonable_encoder(item_data)
+
+    name_exist = filter_data(
+        collection_name=collection_name,
+        filter_dict={'name': item_data.get("name")}
+    )
+    if name_exist:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category Name already exist")
+
+    parent_category_id = item_data.get('parent_category_id')
+    if parent_category_id:
+        parent_category_exist = collection.find_one({'_id': parent_category_id})
+        if not parent_category_exist:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category Id not exist")
+
+    item_data['created_at'] = get_current_timestamp_utc()
+    item_data['created_by'] = created_by
+    item_data['updated_by'] = None
+    item_data['updated_at'] = get_current_timestamp_utc()
+    item_data['is_deleted'] = False
+>>>>>>> Stashed changes
     try:
         collection = client_db[collection_name]
         if not item_data:

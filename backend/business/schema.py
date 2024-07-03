@@ -23,6 +23,7 @@ class RegisterBusiness(BaseModel):
     owner_id: str
     qr_code: str = None
     schedule_list: list = []
+    is_open: bool = False
 
     class Config:
         from_attributes = True
@@ -55,3 +56,4 @@ class BusinessData(BaseModel):
     about_business: str
     qr_code: str
     status: int
+    is_open: bool

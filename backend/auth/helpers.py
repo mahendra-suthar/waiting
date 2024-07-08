@@ -81,6 +81,14 @@ def verify_phone_otp_and_login(user):
                 business_data_dict = {business['_id']: {**business} for business in business_list if business}
                 employee_dict = {employee['_id']: {**employee} for employee in employee_list if employee}
 
+                user_list_dict = {
+                    'collection_name': 'users',
+                    'schema': ['employee_id', 'full_name']
+                }
+                user_response = prepare_item_list(user_list_dict)
+                user_list = user_response.get('data', [])
+                user_dict = {user['_id']: {**user} for user in user_list if user}
+
                 if user_obj['user_type']:
                     business_obj = business_collection.find_one({'owner_id': user_id})
                     if business_obj:
@@ -89,10 +97,13 @@ def verify_phone_otp_and_login(user):
                     employee_obj = employee_collection.find_one({'user_id': user_id})
                     if employee_obj:
                         user_obj['employee_id'] = str(employee_obj['_id'])
-                        user_obj['employee_details'] = employee_dict[str(employee_obj['_id'])]
-                        user_obj['employee_details']['employee_business'] = business_data_dict.get(
-                            employee_obj.get('merchant_id'), None
-                        )
+                        user_obj['employee_details'] = {
+                            **employee_dict[str(employee_obj['_id'])],
+                            'employee_name': user_dict.get(employee_obj['user_id'], {}).get("full_name"),
+                            'employee_business': business_data_dict.get(
+                                employee_obj.get('merchant_id'), None
+                            )
+                        }
 
                 token = create_jwt_token(user_id)
                 return_data = {

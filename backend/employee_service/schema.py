@@ -37,9 +37,9 @@ class EmployeeServiceData(BaseModel):
     description: Optional[str]
     service_fee: float
     fee_type: int
-    start_time: int
-    end_time: int
-    duration: int
+    # start_time: int
+    # end_time: int
+    # duration: int
 
 
 class EmployeeServiceName(BaseModel):

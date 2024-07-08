@@ -186,7 +186,7 @@ def get_queue_user_filtered_data(user_id: str, status_list: list) -> list:
     registered_list = prepare_item_list(registered_filter)
     registered_data = registered_list.get('data', [])
     for data in registered_data:
-        data['queue_details'] = business_dict[data['queue_id']]
+        data['queue_details'] = business_dict.get(data.get('queue_id', None), None)
         date_str = get_current_date_str()
         waiting_list = waiting_list_manager.get_waiting_list(data['queue_id'], date_str)
         data['place_in_queue'] = waiting_list.index(data['user_id']) if data['user_id'] in waiting_list else 0

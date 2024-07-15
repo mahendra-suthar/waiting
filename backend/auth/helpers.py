@@ -8,7 +8,7 @@ from fastapi.requests import Request
 from logs import logger as log
 from config.database import client_db
 from ..users.helpers import insert_user_request
-from config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from config.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_DAYS
 from ..utils import success_response, temp_gen_otp_and_store, temp_verify_otp
 from ..queries import insert_item, update_item, filter_data, get_item, prepare_item_list
 from ..constants import MERCHANT, EMPLOYEE
@@ -126,7 +126,7 @@ def create_jwt_token(user_id: any):
         if user_id:
             payload = {
                 "sub": str(user_id),
-                "exp": datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
+                "exp": datetime.utcnow() + timedelta(days=int(ACCESS_TOKEN_EXPIRE_DAYS))
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         else:

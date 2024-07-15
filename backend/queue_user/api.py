@@ -40,6 +40,7 @@ def create_queue_user(queue_user: RegisterQueueUser = Body(...), current_user: s
         print("q_user_obj", q_user_obj)
         if q_user_obj:
             raise HTTPException(status_code=400, detail="Data already exists")
+    data_dict['enqueue_time'] = get_current_timestamp_utc
     data_inserted = insert_item(queue_user_collection, data_dict, current_user)
     if data_inserted:
         date_str = get_current_date_str(data_dict['queue_date'])

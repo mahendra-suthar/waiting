@@ -1,11 +1,11 @@
 from fastapi.responses import JSONResponse
-from fastapi import Body, HTTPException, Depends
+from fastapi import Body, HTTPException, Depends, status
 from fastapi.routing import APIRouter
 from typing import Any
 
 from ..utils import success_response
 from .schema import RegisterCategory, CategoryData
-from ..queries import insert_item, prepare_item_list
+from ..queries import insert_item, prepare_item_list, filter_data
 from ..auth.helpers import JWTBearer
 
 router = APIRouter()
@@ -17,6 +17,21 @@ def create_category(category: RegisterCategory = Body(...), current_user: str = 
     """
     Register Category API
     """
+    name_exist = filter_data(
+        collection_name=category_collection,
+        filter_dict={'name': category.name}
+    )
+    if name_exist:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category Name already exist")
+
+    parent_category_id = category.parent_category_id
+    if parent_category_id:
+        parent_category_exist = filter_data(
+            collection_name=category_collection,
+            filter_dict={'_id': parent_category_id}
+        )
+        if not parent_category_exist:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category Id not exist")
     inserted_id = insert_item(category_collection, category, current_user)
     response_data = success_response(data={'item_id': str(inserted_id)}, message="Successfully inserted data")
     return JSONResponse(content=response_data, status_code=201)

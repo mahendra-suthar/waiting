@@ -8,11 +8,11 @@ employee_collection = 'queue_user'
 
 class RegisterQueueUser(BaseModel):
     user_id: str
-    queue_id: str
+    queue_id: Optional[str] = None
     queue_date: int or None
-    enqueue_time: int
-    dequeue_time: int
-    turn_time: Optional[int] = 0
+    enqueue_time: Optional[int] = None
+    dequeue_time: Optional[int] = None
+    turn_time: Optional[int] = None
     priority: bool = False
     status: int = QUEUE_USER_REGISTERED
     service_id: Optional[str] = None

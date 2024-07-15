@@ -50,6 +50,8 @@ EMPLOYEE_ACTIVE = 2
 EMPLOYEE_SUSPENDED = 3
 EMPLOYEE_INACTIVE = 4
 EMPLOYEE_TERMINATED = 5
+EMPLOYEE_REQUESTED = 6
+
 
 employee_status_choices = (
     (EMPLOYEE_REGISTERED, "Registered"),
@@ -57,6 +59,7 @@ employee_status_choices = (
     (EMPLOYEE_SUSPENDED, "Suspended"),
     (EMPLOYEE_INACTIVE, "Inactive"),
     (EMPLOYEE_TERMINATED, "Terminated"),
+    (EMPLOYEE_REQUESTED, "Requested"),
 )
 
 WORKING_STATUS_IN_MEETING = 1

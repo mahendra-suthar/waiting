@@ -66,7 +66,8 @@ def create_employee(employee: RegisterEmployee = Body(...), current_user: str = 
 async def get_employees(
         page_number: int = 1,
         page_size: int = 10,
-        search_string: str = None
+        search_string: str = None,
+        status: int = None
 ) -> Any:
     """
     Get all Users
@@ -78,6 +79,9 @@ async def get_employees(
         'page_size': page_size,
         'search_string': search_string
     }
+    if status:
+        data_dict['filters'] = {'status': status}
+
     response_data = prepare_item_list(data_dict)
     data = response_data.get("data")
 
@@ -256,3 +260,5 @@ def get_employee_queue_status_count(queue_id: str) -> Any:
 #     inserted_employee = insert_item(employee_collection, employee_data)
 #     response_data = success_response(data={'employee_id': str(inserted_employee)}, message="Successfully inserted data")
 #     return JSONResponse(content=response_data, status_code=201)
+
+

@@ -87,12 +87,15 @@ async def get_employees(
 
     user_data = get_item_list(collection_name=user_collection, columns=['full_name'])
     user_data_list = user_data.get('data', [])
-    user_dict = {str(user['_id']): user['full_name'] for user in user_data_list if user}
+    user_dict = {str(user['_id']): {**user} for user in user_data_list if user}
 
-    for item in data:
-        item['full_name'] = user_dict.get(item['user_id'])
+    data_list = [
+        {**item, 'user_details': user_dict.get(item['user_id'])}
+        for item in data
+    ]
 
     status_code = response_data.get("status")
+    response_data['data'] = data_list
     return JSONResponse(content=response_data, status_code=status_code)
 
 

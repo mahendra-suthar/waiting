@@ -7,10 +7,16 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
+# Create a custom temporary directory
+RUN mkdir -p /custom_tmp
+
+# Set the environment variable for the custom temporary directory
+ENV TMPDIR=/custom_tmp
+
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 80 available to the world outside this container
+# Make port 8000 available to the world outside this container
 EXPOSE 8000
 
 # Define environment variable

@@ -141,7 +141,7 @@ def get_business_queue_details(business_id: str):
         employee_id = emp_dict.get('_id')
         full_name = full_name_dict.get(emp_dict.get('user_id'), "-")
 
-        if queue_id != 'None':
+        if queue_id and queue_id != "":
             pipeline = [
                 {
                     "$match": {

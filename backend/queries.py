@@ -60,19 +60,6 @@ def insert_item(
     if not isinstance(item_data, dict):
         item_data = jsonable_encoder(item_data)
 
-    name_exist = filter_data(
-        collection_name=collection_name,
-        filter_dict={'name': item_data.get("name")}
-    )
-    if name_exist:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category Name already exist")
-
-    parent_category_id = item_data.get('parent_category_id')
-    if parent_category_id:
-        parent_category_exist = collection.find_one({'_id': parent_category_id})
-        if not parent_category_exist:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Category Id not exist")
-
     item_data['created_at'] = get_current_timestamp_utc()
     item_data['created_by'] = created_by
     item_data['updated_by'] = None

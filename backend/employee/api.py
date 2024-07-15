@@ -79,8 +79,9 @@ async def get_employees(
         'page_size': page_size,
         'search_string': search_string
     }
+    print("-------status----", status, type(status))
     if status:
-        data_dict['filters'] = {'status': status}
+        data_dict['filters'] = {'status': int(status)}
 
     response_data = prepare_item_list(data_dict)
     data = response_data.get("data")

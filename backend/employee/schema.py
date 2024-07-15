@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, constr, validator
+from typing import Optional
 
 from ..constants import EMPLOYEE_REGISTERED
 employee_collection = 'employee'
@@ -17,7 +18,7 @@ class RegisterEmployee(BaseModel):
     phone_verify: bool = False
     status: int = EMPLOYEE_REGISTERED
     user_id: str
-    queue_id: str
+    queue_id: Optional[str] = None
     qr_code: str = None
     is_available: bool = False
     # working_status: int = AVAILABILITY_UNAVAILABLE

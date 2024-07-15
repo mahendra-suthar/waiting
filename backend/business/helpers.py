@@ -198,7 +198,7 @@ def prepare_business_details_with_employee_queue(data_dict):
             **employee,
             'queue': queue_dict.get(employee['queue_id'], {}),
             'employee_details': user_dict.get(employee.get('user_id'), {})
-        } for employee in employee_list if employee]
+        } for employee in employee_list if employee and employee.get('queue_id', None)]
 
         category_name = category_details.get("name") if category_details else None
 

@@ -1,4 +1,5 @@
-from jose import JWTError, jwt
+# from jose import JWTError, jwt
+import jwt
 from fastapi import Depends, HTTPException
 from datetime import datetime, timedelta
 from fastapi.encoders import jsonable_encoder
@@ -80,7 +81,7 @@ def verify_phone_otp_and_login(user):
 
                 business_data_dict = {business['_id']: {**business} for business in business_list if business}
                 employee_dict = {employee['_id']: {**employee} for employee in employee_list if employee}
-
+                print("-----employee_dict-----", employee_dict)
                 user_list_dict = {
                     'collection_name': 'users',
                     'schema': ['employee_id', 'full_name']
@@ -88,7 +89,7 @@ def verify_phone_otp_and_login(user):
                 user_response = prepare_item_list(user_list_dict)
                 user_list = user_response.get('data', [])
                 user_dict = {user['_id']: {**user} for user in user_list if user}
-
+                print("-----user_dict-----", user_dict)
                 if user_obj['user_type']:
                     business_obj = business_collection.find_one({'owner_id': user_id})
                     if business_obj:
@@ -104,8 +105,9 @@ def verify_phone_otp_and_login(user):
                                 employee_obj.get('merchant_id'), None
                             )
                         }
-
+                print("-----token up-----")
                 token = create_jwt_token(user_id)
+                print("-----token-----", token)
                 return_data = {
                     'token': token,
                     'user': jsonable_encoder(user_obj)
@@ -131,8 +133,10 @@ def create_jwt_token(user_id: any):
             token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         else:
             raise HTTPException(status_code=400, detail="Invalid token data")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=500, detail="The token has expired")
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=400, detail="Invalid token data")
+        raise HTTPException(status_code=500, detail="Invalid token")
     except Exception as e:
         log.error(f"Error while creating JWT token: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")

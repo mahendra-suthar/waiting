@@ -18,6 +18,7 @@ employee_collection = 'employee'
 queue_collection = 'queue'
 user_collection = 'users'
 business_schedule_collection = 'business_schedule'
+department_collection = 'department'
 
 
 def jinja_variables_for_business():
@@ -170,9 +171,18 @@ def prepare_business_details_with_employee_queue(data_dict):
             category_response = get_item(category_collection, category_id, None, columns=['name'])
             category_details = category_response.get('data', {})
 
+        department_list_dict = {
+            'collection_name': department_collection,
+            'schema': ['name', 'description'],
+            'filters': {'merchant_id': business_id}
+        }
+        department_response = prepare_item_list(department_list_dict)
+        department_list = department_response.get('data', [])
+
         employee_list_dict = {
             'collection_name': employee_collection,
-            'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id', 'queue_id'],
+            'schema': ['email', 'phone_number', 'country_code', 'employee_number', 'user_id', 'queue_id',
+                       'department_id'],
             'filters': {'merchant_id': business_id}
         }
         employees_response = prepare_item_list(employee_list_dict)
@@ -191,11 +201,13 @@ def prepare_business_details_with_employee_queue(data_dict):
         }
         user_response = prepare_item_list(user_list_dict)
         user_list = user_response.get('data', [])
+        department_dict = {department['_id']: {**department} for department in department_list if department}
         user_dict = {user['_id']: {**user} for user in user_list if user}
         queue_dict = {queue['_id']: {**queue} for queue in queue_list if queue}
 
         employee_list = [{
             **employee,
+            'department_id': department_dict.get(employee.get('department_id'), {}),
             'queue': queue_dict.get(employee['queue_id'], {}),
             'employee_details': user_dict.get(employee.get('user_id'), {})
         } for employee in employee_list if employee and employee.get('queue_id', None)]

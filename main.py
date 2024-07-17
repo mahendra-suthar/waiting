@@ -21,6 +21,7 @@ from backend.post.api import router as post_router
 from backend.leave_type.api import router as leave_type_router
 from backend.clock_in_out.api import router as clock_router
 from backend.business_schedule.api import router as business_schedule_router
+from backend.department.api import router as department_router
 
 
 from backend.users.web import router as user_web_router
@@ -70,6 +71,7 @@ app.include_router(post_router, prefix="/api", tags=['POST'])
 app.include_router(leave_type_router, prefix="/api", tags=['LEAVE_TYPE'])
 app.include_router(clock_router, prefix="/api", tags=['ATTENDANCE'])
 app.include_router(business_schedule_router, prefix="/api", tags=['BUSINESS SCHEDULE'])
+app.include_router(department_router, prefix="/api", tags=['DEPARTMENT'])
 
 app.include_router(user_web_router, prefix="/web", tags=['USER'])
 app.include_router(employee_web_router, prefix="/web", tags=['EMPLOYEE'])

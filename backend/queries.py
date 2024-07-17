@@ -182,6 +182,7 @@ def update_item(
     updated_by: str = None
 ) -> dict:
     try:
+        print("-------item_id, item_data------", item_id, item_data)
         collection = client_db[collection_name]
         if not item_id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Item id not found")
@@ -194,6 +195,7 @@ def update_item(
 
         item_data['updated_at'] = get_current_timestamp_utc()
         item_data['updated_by'] = updated_by
+        print("-------item_id, item_data------", item_id, item_data)
         result = collection.update_one(
             {"_id": ObjectId(item_id)},
             {"$set": item_data}

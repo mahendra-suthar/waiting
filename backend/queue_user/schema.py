@@ -40,3 +40,4 @@ class QueueUserData(BaseModel):
     dequeue_time: int
     status: int
     priority: bool
+    token_number: int

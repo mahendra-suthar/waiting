@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from config.database import client_db
 from ..utils import success_response, generate_qr_code
-from .schema import RegisterEmployee, EmployeeData
+from .schema import RegisterEmployee, EmployeeData, UpdateEmployee
 from ..queries import insert_item, prepare_item_list, filter_data, update_item, get_item, get_item_list
 from ..constants import EMPLOYEE, queue_user_status_choices
 from ..auth.helpers import JWTBearer
@@ -253,15 +253,18 @@ def get_employee_queue_status_count(queue_id: str) -> Any:
     return JSONResponse(content=response_data, status_code=200)
 
 
-# @router.put("/v1/employee", response_description="Update Employee")
-# def create_employee(employee: RegisterEmployee = Body(...)) -> Any:
-#     """
-#     Register employee api
-#     """
-#     employee_data = jsonable_encoder(employee)
-#     # inserted_employee = await insert_employee_request(employee_data)
-#     inserted_employee = insert_item(employee_collection, employee_data)
-#     response_data = success_response(data={'employee_id': str(inserted_employee)}, message="Successfully inserted data")
-#     return JSONResponse(content=response_data, status_code=201)
+@router.put("/v1/employee/{employee_id}", response_description="Update Employee")
+def update_employee(employee_id: str, employee: UpdateEmployee = Body(...)) -> Any:
+    """
+    Update employee API
+    """
+    employee_data = {k: v for k, v in employee.dict().items() if v is not None}  # Filter out None values
+    if not employee_data:
+        raise HTTPException(status_code=400, detail="No data provided for update")
+
+    # Assume employee_collection is a valid MongoDB collection
+    updated_employee = update_item(employee_collection, employee_id, employee_data)
+    response_data = success_response(data={'employee_id': str(updated_employee)}, message="Successfully updated data")
+    return JSONResponse(content=response_data, status_code=200)
 
 

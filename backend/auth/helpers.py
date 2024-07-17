@@ -134,8 +134,10 @@ def create_jwt_token(user_id: any):
         else:
             raise HTTPException(status_code=400, detail="Invalid token data")
     except jwt.ExpiredSignatureError:
+        log.error(f"===========The token has expired============")
         raise HTTPException(status_code=500, detail="The token has expired")
     except jwt.InvalidTokenError:
+        log.error(f"=========Invalid token==========")
         raise HTTPException(status_code=500, detail="Invalid token")
     except Exception as e:
         log.error(f"Error while creating JWT token: {e}")

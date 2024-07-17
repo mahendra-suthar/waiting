@@ -3,6 +3,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
 from typing import Any
+from bson import ObjectId
 
 from ..utils import success_response, get_current_timestamp_utc, get_current_date_str
 from .schema import RegisterQueueUser
@@ -11,10 +12,13 @@ from .helpers import get_queue_using_service, update_queue, prepare_appointments
 from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS
 from ..websocket import waiting_list_manager
 from ..auth.helpers import JWTBearer
+from config.database import client_db
+
 
 router = APIRouter()
 queue_user_collection = 'queue_user'
 queue_collection = 'queue'
+queue_client = client_db[queue_collection]
 
 
 @router.post("/v1/queue_user", response_description="Add new queue user")
@@ -26,8 +30,10 @@ def create_queue_user(queue_user: RegisterQueueUser = Body(...), current_user: s
     queue_id = get_queue_using_service(data_dict)
     user_id = data_dict['user_id']
     data_dict['queue_id'] = str(queue_id)
-    del data_dict['employee_id']
-    del data_dict['service_id']
+
+    data_dict.pop('employee_id', None)
+    data_dict.pop('service_id', None)
+
     print("q_user_obj", queue_id, user_id)
     if queue_id and user_id:
         q_user_obj = filter_data(
@@ -40,7 +46,17 @@ def create_queue_user(queue_user: RegisterQueueUser = Body(...), current_user: s
         print("q_user_obj", q_user_obj)
         if q_user_obj:
             raise HTTPException(status_code=400, detail="Data already exists")
+
+    queue_doc = queue_client.find_one({"_id": ObjectId(queue_id)})
+    if not queue_doc:
+        raise HTTPException(status_code=404, detail="Queue not found")
+
+    last_token = queue_doc.get('last_token_number', 0)
+    new_token = (last_token % 9999) + 1
+    token_number = f"{new_token:04d}"
+
     data_dict['enqueue_time'] = get_current_timestamp_utc()
+    data_dict['token_number'] = token_number
     data_inserted = insert_item(queue_user_collection, data_dict, current_user)
     if data_inserted:
         date_str = get_current_date_str(data_dict['queue_date'])

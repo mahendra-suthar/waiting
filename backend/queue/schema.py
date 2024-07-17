@@ -18,9 +18,14 @@ class RegisterQueue(BaseModel):
     end_time: time
     status: int = QUEUE_REGISTERED
     running_status: int = QUEUE_RUNNING_STOP
+    last_token_number: int = 0
 
     class Config:
         from_attributes = True
+
+    def generate_token_number(self) -> str:
+        self.last_token_number = (self.last_token_number % 9999) + 1
+        return f"{self.last_token_number:04d}"
 
 
 class UpdateQueue(BaseModel):
@@ -45,3 +50,4 @@ class QueueData(BaseModel):
     start_time: int
     end_time: int
     running_status: int
+    last_token_number: int

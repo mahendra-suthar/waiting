@@ -52,15 +52,18 @@ class RegisterEmployee(BaseModel):
 
 
 class UpdateEmployee(BaseModel):
-    merchant_id: str
-    joined_date: int
-    department_id: str
-    # status: int
-    email: EmailStr
-    country_code: constr(min_length=1, max_length=4)
-    phone_number: constr(min_length=1, max_length=15)
-    employee_number: int
-    queue_id: str
+    merchant_id: Optional[str] = None
+    joined_date: Optional[int] = None
+    department_id: Optional[str] = None
+    email: Optional[EmailStr] = None
+    country_code: Optional[constr(min_length=1, max_length=4)] = None
+    phone_number: Optional[constr(min_length=1, max_length=15)] = None
+    employee_number: Optional[int] = None
+    status: Optional[int] = None
+    user_id: Optional[str] = None
+    queue_id: Optional[str] = None
+    qr_code: Optional[str] = None
+    is_available: Optional[bool] = None
 
 
 class EmployeeData(BaseModel):

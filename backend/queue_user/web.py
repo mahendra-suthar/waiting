@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, Response, RedirectResponse
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
+from bson import ObjectId
 
 from .helpers import jinja_variables_for_queue_user, update_queue
 from ..forms import QueueUserForm
@@ -11,12 +12,14 @@ from .schema import RegisterQueueUser, UpdateQueueUser
 from ..queries import insert_item, filter_data
 from ..utils import get_current_timestamp_utc, get_current_date_str
 from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_IN_PROGRESS
+from config.database import client_db
 
 
 router = APIRouter()
 templates = Jinja2Templates(directory=r"templates")
 queue_user_collection = 'queue_user'
 queue_collection = 'queue'
+queue_client = client_db[queue_collection]
 
 
 @router.get("/queue_user", response_class=HTMLResponse)
@@ -85,7 +88,6 @@ async def save_queue_form(
     form.dequeue_time.data = dequeue_time
 
     if await form.validate():
-
         item_data = RegisterQueueUser(
             user_id=user_id,
             queue_id=queue_id,
@@ -109,6 +111,17 @@ async def save_queue_form(
             print("q_user_obj", q_user_obj)
             if q_user_obj:
                 raise HTTPException(status_code=400, detail="Data already exists")
+
+        queue_doc = queue_client.find_one({"_id": ObjectId(queue_id)})
+        if not queue_doc:
+            raise HTTPException(status_code=404, detail="Queue not found")
+
+        last_token = queue_doc.get('last_token_number', 0)
+        new_token = (last_token % 9999) + 1
+        token_number = f"{new_token:04d}"
+        print("-----new_token------", new_token)
+
+        data_dict['token_number'] = token_number
         inserted_id = insert_item(queue_user_collection, data_dict)
         date_str = get_current_date_str(queue_date)
         update_queue(str(user_id), queue_id, date_str)

@@ -23,5 +23,5 @@ EXPOSE 8000
 # Define environment variable
 ENV NAME=waiting
 
-# Run uvicorn with main.py as the application entry point
+# Run app.py when the container launches
 CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]

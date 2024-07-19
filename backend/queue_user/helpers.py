@@ -1,8 +1,10 @@
 from logs import logger as log
-from fastapi import HTTPException
+from fastapi import HTTPException, status
+from bson import ObjectId
+from datetime import datetime
 
 from .schema import QueueUserData
-from ..queries import prepare_item_list, get_item_list, get_item, update_item, update_items, generate_mongo_query
+from ..queries import prepare_item_list, get_item_list, get_item, update_item, update_items, filter_data
 from ..constants import (QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS, queue_user_status_choices,
                          QUEUE_USER_FAILED, QUEUE_USER_CANCELLED)
 from ..websocket import waiting_list_manager
@@ -217,44 +219,76 @@ def prepare_appointments_history(user_id: str):
             'queue_user_details': completed_data
         }
     ]
-    # final_list = []
-    #
-    # if user_id:
-    #     position_of_queue_user = 0
-    #     pipeline = [
-    #         {
-    #             "$match": {
-    #                 "is_deleted": False,
-    #                 "user_id": user_id
-    #             }
-    #         },
-    #         {
-    #             "$group": {
-    #                 "_id": "$status",
-    #                 "queue_user": {"$push": "$$ROOT"}
-    #             }
-    #         }
-    #     ]
-    #     grouped_queue_user = client_db[queue_user_collection].aggregate(pipeline)
-    #     queue_user_status_dict = dict(queue_user_status_choices)
-    #     business_dict = get_business_employee_by_queue()
-    #
-    #
-    #
-    #     for group in grouped_queue_user:
-    #         data_dict = dict()
-    #         data_dict['status'] = {'value': group['_id'], 'label': queue_user_status_dict[group['_id']]}
-    #         data_dict['queue_user_details'] = []
-    #         for queue_user in group['queue_user']:
-    #             queue_id = queue_user['queue_id']
-    #             queue_users_dict = {
-    #                 'id': str(queue_user['_id']),
-    #                 'current_length': len(waiting_list),
-    #                 'queue_details': business_dict[queue_id]
-    #             }
-    #             if waiting_list and user_id in waiting_list:
-    #                 queue_users_dict['place_in_queue'] = waiting_list.index(user_id)
-    #
-    #             data_dict['queue_user_details'].append(queue_users_dict)
-    #         final_list.append(data_dict)
     return {'data': final_list}
+
+
+def prepare_customer_report(user_id):
+    data_dict = {
+        'total_customers': 0,
+        'new_customers': 0,
+        'today_customers': {
+            'total': 0,
+            'status_breakdown': []
+        }
+    }
+
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User Id not found")
+
+    queue_ids = []
+    is_business = filter_data(business_collection, {'_id': ObjectId(user_id)})
+    is_employee = filter_data(employee_collection, {'_id': ObjectId(user_id)})
+
+    if is_business or is_employee:
+        if is_business:
+            employee_dict = {
+                'collection_name': employee_collection,
+                'filters': {'is_deleted': False, 'merchant_id': user_id},
+                'schema': ['queue_id']
+            }
+        else:  # is_employee
+            employee_dict = {
+                'collection_name': employee_collection,
+                'filters': {'is_deleted': False, '_id': ObjectId(user_id)},
+                'schema': ['queue_id']
+            }
+
+        employee_list = prepare_item_list(employee_dict).get('data')
+        queue_ids = [item['queue_id'] for item in employee_list]
+
+    if queue_ids:
+        queue_user_dict = {
+            'collection_name': queue_user_collection,
+            'filters': {'is_deleted': False, 'queue_id': {'$in': queue_ids}},
+            'schema': ['_id', 'created_at', 'status']
+        }
+        queue_user_list = prepare_item_list(queue_user_dict).get('data')
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Queue not found")
+
+    data_dict['total_customers'] = len(queue_user_list)
+    today = datetime.now().date()
+    status_dict = dict(queue_user_status_choices)
+
+    status_breakdown = {}
+
+    for user in queue_user_list:
+        user_created_date = datetime.fromtimestamp(user['created_at']).date()
+
+        if user_created_date == today:
+            data_dict['new_customers'] += 1
+            data_dict['today_customers']['total'] += 1
+
+            status = user['status']
+            if status in status_breakdown:
+                status_breakdown[status]['count'] += 1
+                status_breakdown[status]['customers'].append(user)
+            else:
+                status_breakdown[status] = {
+                    'status': {'key': status, 'label': status_dict[status]},
+                    'count': 1,
+                    'customers': [user]
+                }
+
+    data_dict['today_customers']['status_breakdown'] = list(status_breakdown.values())
+    return {'data': data_dict}

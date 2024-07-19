@@ -8,7 +8,7 @@ from bson import ObjectId
 from ..utils import success_response, get_current_timestamp_utc, get_current_date_str
 from .schema import RegisterQueueUser
 from ..queries import insert_item, prepare_item_list, update_items, update_item, get_item, filter_data
-from .helpers import get_queue_using_service, update_queue, prepare_appointments_history
+from .helpers import get_queue_using_service, update_queue, prepare_appointments_history, prepare_customer_report
 from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS
 from ..websocket import waiting_list_manager
 from ..auth.helpers import JWTBearer
@@ -118,6 +118,15 @@ def current_users_appointments(current_user: str = Depends(JWTBearer())) -> Any:
     response_data = success_response(data=data_dict['data'], message="Successfully get data")
     return JSONResponse(content=response_data, status_code=201)
 
+
+@router.get("/customer_report/{user_id}")
+def customer_report(user_id: str):
+    """
+    Preparing Customer report for employee or owner
+    """
+    data_dict = prepare_customer_report(user_id)
+    response_data = success_response(data=data_dict, message="Successfully get data")
+    return JSONResponse(content=response_data, status_code=201)
 
 
 

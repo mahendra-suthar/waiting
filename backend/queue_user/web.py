@@ -119,7 +119,6 @@ async def save_queue_form(
         last_token = queue_doc.get('last_token_number', 0)
         new_token = (last_token % 9999) + 1
         token_number = f"{new_token:04d}"
-        print("-----new_token------", new_token)
 
         data_dict['token_number'] = token_number
         inserted_id = insert_item(queue_user_collection, data_dict)

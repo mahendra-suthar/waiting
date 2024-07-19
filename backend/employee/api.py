@@ -19,6 +19,7 @@ user_collection = 'users'
 business_collection = 'business'
 queue_collection = 'queue'
 queue_user_collection = 'queue_user'
+department_collection = 'department'
 
 
 @router.post("/v1/employee", response_description="Add new Employee")
@@ -189,12 +190,13 @@ def get_employee_details(employee_id: str) -> Any:
         item_id=employee_id,
         columns=[
             'merchant_id', 'joined_date', 'email', 'country_code', 'phone_number', 'status', 'user_id', 'queue_id',
+            'department_id'
         ]
     )
     status_code = response_data.get("status")
     data = response_data.get("data")
     merchant_id = data.get("merchant_id")
-    # user_id = data.get("user_id")
+    user_id = data.get("user_id")
     queue_id = data.get("queue_id")
     if merchant_id:
         merchant_data = get_item(
@@ -204,13 +206,23 @@ def get_employee_details(employee_id: str) -> Any:
         )
         data['business_details'] = merchant_data.get("data")
 
-    # if user_id:
-    #     user_data = get_item(
-    #         collection_name=user_collection,
-    #         item_id=user_id,
-    #         columns=['full_name', 'email', 'country_code', 'phone_number', 'status', 'user_type']
-    #     )
-    #     data['user_details'] = user_data.get("data")
+    if user_id:
+        user_data = get_item(
+            collection_name=user_collection,
+            item_id=user_id,
+            columns=['full_name', 'email', 'country_code', 'phone_number', 'status', 'user_type']
+        )
+        data['user_details'] = user_data.get("data")
+
+    department_list_dict = {
+        'collection_name': department_collection,
+        'schema': ['name', 'description'],
+        'filters': {'merchant_id': merchant_id}
+    }
+    department_response = prepare_item_list(department_list_dict)
+    department_list = department_response.get('data', [])
+    department_dict = {department['_id']: {**department} for department in department_list}
+    data['department_id'] = department_dict.get(data['department_id'])
 
     if queue_id:
         queue_data = get_item(

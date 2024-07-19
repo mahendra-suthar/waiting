@@ -24,6 +24,9 @@ class RegisterUser(BaseModel):
     date_of_birth: Optional[int] = None
     gender: Optional[int] = None
     user_type: Optional[int] = CUSTOMER
+    is_customer: bool = True
+    is_staff: bool = False
+    is_business: bool = False
 
     class Config:
         from_attributes = True

@@ -109,7 +109,7 @@ QUEUE_USER_FAILED = 4
 QUEUE_USER_CANCELLED = 5
 
 queue_user_status_choices = (
-    (QUEUE_REGISTERED, "Registered"),
+    (QUEUE_USER_REGISTERED, "Registered"),
     (QUEUE_USER_IN_PROGRESS, "In Progress"),
     (QUEUE_USER_COMPLETED, "Completed"),
     (QUEUE_USER_FAILED, "Failed"),

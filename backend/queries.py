@@ -130,7 +130,7 @@ def prepare_item_list(data_dict: dict) -> Any:
     # Extract data from data_dict
     collection_name = data_dict.get('collection_name', None)
     schema = data_dict.get('schema', None)
-    page_number = data_dict.get('page_number', 1)
+    page_number = data_dict.get('page_number', 0)
     page_size = data_dict.get('page_size', 10)
     search_string = data_dict.get('search_string', None)
     foreign_keys = data_dict.get("foreign_keys", {})
@@ -159,15 +159,15 @@ def prepare_item_list(data_dict: dict) -> Any:
     print("-------filter_query-------", filter_query)
 
     # preparing pagination data
-    if page_number < 1 or page_size < 1:
-        raise HTTPException(status_code=400, detail="Invalid page or page_size")
+    # if page_number < 1 or page_size < 1:
+    #     raise HTTPException(status_code=400, detail="Invalid page or page_size")
+    if page_number and page_size:
+        skip = (page_number - 1) * page_size
+        limit = page_size
+        result = collection.find(filter_query, {**projection}).skip(skip).limit(limit)
+    else:
+        result = collection.find(filter_query, {**projection})
 
-    skip = (page_number - 1) * page_size
-    limit = page_size
-
-    # fetching data from database
-    # result = collection.find(filter_query, {**projection}).skip(skip).limit(limit)
-    result = collection.find(filter_query, {**projection})
     if result:
         documents = [{**doc, '_id': str(doc['_id'])} for doc in result]
         return success_response(data=documents, status=status.HTTP_200_OK, message="Data get successfully")

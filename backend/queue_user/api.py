@@ -2,13 +2,14 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import Body, HTTPException, Depends
 from fastapi.routing import APIRouter
-from typing import Any
+from typing import Any, Optional
 from bson import ObjectId
 
 from ..utils import success_response, get_current_timestamp_utc, get_current_date_str
 from .schema import RegisterQueueUser
 from ..queries import insert_item, prepare_item_list, update_items, update_item, get_item, filter_data
-from .helpers import get_queue_using_service, update_queue, prepare_appointments_history, prepare_customer_report
+from .helpers import (get_queue_using_service, update_queue, prepare_appointments_history, prepare_customer_report,
+                      prepare_customer_list)
 from ..constants import QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER_IN_PROGRESS
 from ..websocket import waiting_list_manager
 from ..auth.helpers import JWTBearer
@@ -119,12 +120,28 @@ def current_users_appointments(current_user: str = Depends(JWTBearer())) -> Any:
     return JSONResponse(content=response_data, status_code=201)
 
 
+@router.post("/v1/customer_list/{user_id}", response_description="Next User")
+def current_list(user_id: str, period: str) -> Any:
+    """
+    Preparing current user's list
+    """
+    if period and period not in ['day', 'week', 'month', 'year']:
+        raise HTTPException(status_code=400, detail="Invalid period specified")
+
+    data_dict = prepare_customer_list(user_id, period)
+    response_data = success_response(data=data_dict, message="Successfully get data")
+    return JSONResponse(content=response_data, status_code=201)
+
+
 @router.get("/customer_report/{user_id}")
-def customer_report(user_id: str):
+def customer_report(user_id: str, period: str):
     """
     Preparing Customer report for employee or owner
     """
-    data_dict = prepare_customer_report(user_id)
+    if period and period not in ['day', 'week', 'month', 'year']:
+        raise HTTPException(status_code=400, detail="Invalid period specified")
+
+    data_dict = prepare_customer_report(user_id, period)
     response_data = success_response(data=data_dict, message="Successfully get data")
     return JSONResponse(content=response_data, status_code=201)
 

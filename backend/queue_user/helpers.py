@@ -1,7 +1,7 @@
 from logs import logger as log
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .schema import QueueUserData
 from ..queries import prepare_item_list, get_item_list, get_item, update_item, update_items, filter_data
@@ -9,6 +9,7 @@ from ..constants import (QUEUE_USER_REGISTERED, QUEUE_USER_COMPLETED, QUEUE_USER
                          QUEUE_USER_FAILED, QUEUE_USER_CANCELLED)
 from ..websocket import waiting_list_manager
 from ..utils import get_current_date_str
+from config.database import client_db
 
 queue_user_collection = 'queue_user'
 queue_collection = 'queue'
@@ -222,18 +223,118 @@ def prepare_appointments_history(user_id: str):
     return {'data': final_list}
 
 
-def prepare_customer_report(user_id):
+def prepare_customer_list(user_id: str, period: str):
+    from fastapi import status
+
+    data_dict = {
+        'total_customers': 0,
+        'filtered_customers': [],
+    }
+
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User Id not found")
+
+    if period == 'day':
+        start_time = datetime.now() - timedelta(days=1)
+    elif period == 'week':
+        start_time = datetime.now() - timedelta(weeks=1)
+    elif period == 'month':
+        start_time = datetime.now() - timedelta(days=30)
+    elif period == 'year':
+        start_time = datetime.now() - timedelta(days=365)
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid period specified")
+
+    queue_ids = []
+    is_business = filter_data(business_collection, {'_id': ObjectId(user_id)})
+    is_employee = filter_data(employee_collection, {'_id': ObjectId(user_id)})
+
+    if is_business or is_employee:
+        if is_business:
+            employee_dict = {
+                'collection_name': employee_collection,
+                'filters': {'is_deleted': False, 'merchant_id': user_id},
+                'schema': ['queue_id']
+            }
+        else:  # is_employee
+            employee_dict = {
+                'collection_name': employee_collection,
+                'filters': {'is_deleted': False, '_id': ObjectId(user_id)},
+                'schema': ['queue_id'],
+                'page_number': 1
+            }
+
+        employee_list = prepare_item_list(employee_dict).get('data')
+        queue_ids = [item['queue_id'] for item in employee_list]
+
+    user_list_dict = {
+        'collection_name': user_collection,
+        'schema': ['full_name', 'country_code', 'phone_number']
+    }
+    user_response = prepare_item_list(user_list_dict)
+    user_list = user_response.get('data', [])
+    user_dict = {user['_id']: {**user} for user in user_list if user}
+    status_dict = dict(queue_user_status_choices)
+
+    if queue_ids:
+        queue_user_dict = {
+            'collection_name': queue_user_collection,
+            'filters': {'is_deleted': False, 'queue_id': {'$in': queue_ids}, 'created_at': {'$gte': start_time.timestamp()}},
+            'schema': ['_id', 'created_at', 'status', 'created_at', 'user_id']
+        }
+        queue_user_list = prepare_item_list(queue_user_dict).get('data')
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Queue not found")
+
+    data_dict['total_customers'] = len(queue_user_list)
+    for user in queue_user_list:
+        user['user_id'] = user_dict.get(user['user_id'])
+        user['status'] = {'key': user.get('status'), 'label': status_dict.get(user.get('status'))}
+        data_dict['filtered_customers'].append(user)
+
+    return {'data': data_dict}
+
+
+def prepare_customer_report(user_id: str, period: str):
+    from fastapi import status
+
     data_dict = {
         'total_customers': 0,
         'new_customers': 0,
-        'today_customers': {
-            'total': 0,
-            'status_breakdown': []
+        'done_customers': 0,
+        'rejected_customers': 0,
+        'canceled_customers': 0,
+        'filtered_customers': [],
+        'graph_data': {
+            'labels': [],
+            'counts': []
         }
     }
 
     if not user_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User Id not found")
+
+    if period == 'day':
+        start_time = datetime.now() - timedelta(days=1)
+        time_grouping = {'$hour': '$created_at'}
+        labels = [f'{hour}:00' for hour in range(24)]
+    elif period == 'week':
+        start_time = datetime.now() - timedelta(weeks=1)
+        time_grouping = {'$dayOfWeek': '$created_at'}
+        labels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    elif period == 'month':
+        start_time = datetime.now() - timedelta(days=30)
+        time_grouping = {'$dayOfMonth': '$created_at'}
+        labels = [str(day) for day in range(1, 32)]
+    elif period == 'year':
+        start_time = datetime.now() - timedelta(days=365)
+        time_grouping = {'$month': '$created_at'}
+        labels = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ]
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid period specified")
 
     queue_ids = []
     is_business = filter_data(business_collection, {'_id': ObjectId(user_id)})
@@ -259,8 +360,8 @@ def prepare_customer_report(user_id):
     if queue_ids:
         queue_user_dict = {
             'collection_name': queue_user_collection,
-            'filters': {'is_deleted': False, 'queue_id': {'$in': queue_ids}},
-            'schema': ['_id', 'created_at', 'status']
+            'filters': {'is_deleted': False, 'queue_id': {'$in': queue_ids}, 'created_at': {'$gte': start_time.timestamp()}},
+            'schema': ['_id', 'created_at', 'status', 'user_id']
         }
         queue_user_list = prepare_item_list(queue_user_dict).get('data')
     else:
@@ -270,25 +371,308 @@ def prepare_customer_report(user_id):
     today = datetime.now().date()
     status_dict = dict(queue_user_status_choices)
 
-    status_breakdown = {}
+    # Initialize status breakdown
+    status_breakdown = {status: {'count': 0, 'customers': []} for status in status_dict.keys()}
 
     for user in queue_user_list:
         user_created_date = datetime.fromtimestamp(user['created_at']).date()
-
         if user_created_date == today:
             data_dict['new_customers'] += 1
-            data_dict['today_customers']['total'] += 1
 
-            status = user['status']
-            if status in status_breakdown:
-                status_breakdown[status]['count'] += 1
-                status_breakdown[status]['customers'].append(user)
-            else:
-                status_breakdown[status] = {
-                    'status': {'key': status, 'label': status_dict[status]},
-                    'count': 1,
-                    'customers': [user]
-                }
+        status = user['status']
+        if status in status_breakdown:
+            status_breakdown[status]['count'] += 1
+            # status_breakdown[status]['customers'].append(user)
 
-    data_dict['today_customers']['status_breakdown'] = list(status_breakdown.values())
+    data_dict['status_breakdown'] = [{**status, 'status': {'key': key, 'label': status_dict[key]}} for key, status in status_breakdown.items()]
+
+    pipeline = [
+        {'$match': {'is_deleted': False, 'queue_id': {'$in': queue_ids}, 'created_at': {'$gte': start_time.timestamp()}}},
+        {'$addFields': {'created_at': {'$toDate': {'$multiply': ['$created_at', 1000]}}}},  # Convert to Date
+        {'$group': {'_id': time_grouping, 'count': {'$sum': 1}}},
+        {'$sort': {'_id': 1}}
+    ]
+    queue_user_client = client_db[queue_user_collection]
+    graph_data = list(queue_user_client.aggregate(pipeline))
+
+    graph_dict = {item['_id']: item['count'] for item in graph_data}
+    counts = [graph_dict.get(i+1, 0) for i in range(len(labels))]  # i+1 to match 1-based month index
+
+    data_dict['graph_data']['labels'] = labels
+    data_dict['graph_data']['counts'] = counts
+
     return {'data': data_dict}
+
+
+
+# from fastapi import HTTPException
+# from bson import ObjectId
+# from datetime import datetime, timedelta
+# from pymongo import MongoClient
+#
+# def prepare_customer_report(user_id: str, period: str):
+#     data_dict = {
+#         'total_customers': 0,
+#         'new_customers': 0,
+#         'done_customers': 0,
+#         'rejected_customers': 0,
+#         'canceled_customers': 0,
+#         'filtered_customers': [],
+#         'graph_data': {
+#             'labels': [],
+#             'counts': []
+#         }
+#     }
+#
+#     if not user_id:
+#         raise HTTPException(status_code=400, detail="User Id not found")
+#
+#     queue_ids = []
+#     is_business = filter_data(business_collection, {'_id': ObjectId(user_id)})
+#     is_employee = filter_data(employee_collection, {'_id': ObjectId(user_id)})
+#
+#     if is_business or is_employee:
+#         if is_business:
+#             employee_dict = {
+#                 'collection_name': employee_collection,
+#                 'filters': {'is_deleted': False, 'merchant_id': user_id},
+#                 'schema': ['queue_id']
+#             }
+#         else:  # is_employee
+#             employee_dict = {
+#                 'collection_name': employee_collection,
+#                 'filters': {'is_deleted': False, '_id': ObjectId(user_id)},
+#                 'schema': ['queue_id']
+#             }
+#
+#         employee_list = prepare_item_list(employee_dict).get('data')
+#         queue_ids = [item['queue_id'] for item in employee_list]
+#
+#     if queue_ids:
+#         queue_user_dict = {
+#             'collection_name': queue_user_collection,
+#             'filters': {'is_deleted': False, 'queue_id': {'$in': queue_ids}},
+#             'schema': ['_id', 'created_at', 'status']
+#         }
+#         queue_user_list = prepare_item_list(queue_user_dict).get('data')
+#     else:
+#         raise HTTPException(status_code=400, detail="Queue not found")
+#
+#     data_dict['total_customers'] = len(queue_user_list)
+#     today = datetime.now().date()
+#     status_dict = dict(queue_user_status_choices)
+#
+#     status_breakdown = {status: {'count': 0, 'customers': []} for status in status_dict.keys()}
+#
+#     for user in queue_user_list:
+#         user_created_date = datetime.fromtimestamp(user['created_at']).date()
+#         if user_created_date == today:
+#             data_dict['new_customers'] += 1
+#
+#         status = user['status']
+#         if status in status_breakdown:
+#             status_breakdown[status]['count'] += 1
+#             status_breakdown[status]['customers'].append(user)
+#
+#     data_dict['status_breakdown'] = [{**status, 'status': {'key': key, 'label': status_dict[key]}} for key, status in status_breakdown.items()]
+#
+#     # Graph data
+#     if period == 'day':
+#         start_time = datetime.now() - timedelta(days=1)
+#         time_grouping = {'$hour': '$created_at'}
+#         labels = [f'{hour}:00' for hour in range(0, 24, 4)]
+#     elif period == 'week':
+#         start_time = datetime.now() - timedelta(weeks=1)
+#         time_grouping = {'$dayOfWeek': '$created_at'}
+#         labels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+#     elif period == 'month':
+#         start_time = datetime.now() - timedelta(days=30)
+#         time_grouping = {'$dayOfMonth': '$created_at'}
+#         labels = [str(day) for day in range(1, 32, 7)]
+#     elif period == 'year':
+#         start_time = datetime.now() - timedelta(days=365)
+#         time_grouping = {'$month': '$created_at'}
+#         labels = [
+#             'January', 'February', 'March', 'April', 'May', 'June',
+#             'July', 'August', 'September', 'October', 'November', 'December'
+#         ]
+#     else:
+#         raise HTTPException(status_code=400, detail="Invalid period specified")
+#
+#     # Convert start_time to timestamp
+#     start_timestamp = start_time.timestamp()
+#
+#     pipeline = [
+#         {'$match': {'is_deleted': False, 'queue_id': {'$in': queue_ids}, 'created_at': {'$gte': start_timestamp}}},
+#         {'$addFields': {'created_at': {'$toDate': {'$multiply': ['$created_at', 1000]}}}},  # Convert to Date
+#         {'$group': {'_id': time_grouping, 'count': {'$sum': 1}}},
+#         {'$sort': {'_id': 1}}
+#     ]
+#
+#     graph_data = list(queue_user_collection.aggregate(pipeline))
+#
+#     graph_dict = {item['_id']: item['count'] for item in graph_data}
+#
+#     # Fill counts for each label
+#     if period == 'day':
+#         counts = [graph_dict.get(hour, 0) for hour in range(0, 24, 4)]
+#     elif period == 'week':
+#         counts = [graph_dict.get(day + 1, 0) for day in range(7)]  # MongoDB's dayOfWeek starts from 1 (Sunday) to 7 (Saturday)
+#     elif period == 'month':
+#         counts = [graph_dict.get(day, 0) for day in range(1, 32, 7)]  # Days of month
+#     elif period == 'year':
+#         counts = [graph_dict.get(month, 0) for month in range(1, 13)]  # Months of year
+#
+#     data_dict['graph_data']['labels'] = labels
+#     data_dict['graph_data']['counts'] = counts
+#
+#     return {'data': data_dict}
+
+
+
+
+
+# def prepare_customer_report(user_id):
+#     from fastapi import status
+#     data_dict = {
+#         'total_customers': 0,
+#         'new_customers': 0,
+#         'done_customers': 0,
+#         'rejected_customers': 0,
+#         'canceled_customers': 0,
+#         'filtered_customers': []
+#     }
+#
+#     if not user_id:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User Id not found")
+#
+#     queue_ids = []
+#     is_business = filter_data(business_collection, {'_id': ObjectId(user_id)})
+#     is_employee = filter_data(employee_collection, {'_id': ObjectId(user_id)})
+#
+#     if is_business or is_employee:
+#         if is_business:
+#             employee_dict = {
+#                 'collection_name': employee_collection,
+#                 'filters': {'is_deleted': False, 'merchant_id': user_id},
+#                 'schema': ['queue_id']
+#             }
+#         else:  # is_employee
+#             employee_dict = {
+#                 'collection_name': employee_collection,
+#                 'filters': {'is_deleted': False, '_id': ObjectId(user_id)},
+#                 'schema': ['queue_id']
+#             }
+#
+#         employee_list = prepare_item_list(employee_dict).get('data')
+#         queue_ids = [item['queue_id'] for item in employee_list]
+#
+#     if queue_ids:
+#         queue_user_dict = {
+#             'collection_name': queue_user_collection,
+#             'filters': {'is_deleted': False, 'queue_id': {'$in': queue_ids}},
+#             'schema': ['_id', 'created_at', 'status']
+#         }
+#         queue_user_list = prepare_item_list(queue_user_dict).get('data')
+#     else:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Queue not found")
+#
+#     data_dict['total_customers'] = len(queue_user_list)
+#     today = datetime.now().date()
+#     status_dict = dict(queue_user_status_choices)
+#
+#     status_breakdown = {}
+#
+#     for user in queue_user_list:
+#         user_created_date = datetime.fromtimestamp(user['created_at']).date()
+#
+#         if user_created_date == today:
+#             data_dict['new_customers'] += 1
+#             data_dict['today_customers']['total'] += 1
+#
+#             status = user['status']
+#             if status in status_breakdown:
+#                 status_breakdown[status]['count'] += 1
+#                 status_breakdown[status]['customers'].append(user)
+#             else:
+#                 status_breakdown[status] = {
+#                     'status': {'key': status, 'label': status_dict[status]},
+#                     'count': 1,
+#                     'customers': [user]
+#                 }
+#
+#     data_dict['today_customers']['status_breakdown'] = list(status_breakdown.values())
+#     return {'data': data_dict}
+
+
+# def prepare_customer_report(user_id, start_date=None, end_date=None):
+#     data_dict = {
+#         'total_customers': 0,
+#         'status_breakdown': {}
+#     }
+#
+#     if not user_id:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User Id not found")
+#
+#     queue_ids = []
+#     is_business = filter_data(business_collection, {'_id': ObjectId(user_id)})
+#     is_employee = filter_data(employee_collection, {'_id': ObjectId(user_id)})
+#
+#     if is_business or is_employee:
+#         if is_business:
+#             employee_dict = {
+#                 'collection_name': employee_collection,
+#                 'filters': {'is_deleted': False, 'merchant_id': user_id},
+#                 'schema': ['queue_id']
+#             }
+#         else:  # is_employee
+#             employee_dict = {
+#                 'collection_name': employee_collection,
+#                 'filters': {'is_deleted': False, '_id': ObjectId(user_id)},
+#                 'schema': ['queue_id']
+#             }
+#
+#         employee_list = prepare_item_list(employee_dict).get('data')
+#         queue_ids = [item['queue_id'] for item in employee_list]
+#
+#     if not queue_ids:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Queue not found")
+#
+#     date_filter = {}
+#     if start_date:
+#         date_filter['$gte'] = datetime.strptime(start_date, '%Y-%m-%d').timestamp()
+#     if end_date:
+#         date_filter['$lte'] = datetime.strptime(end_date, '%Y-%m-%d').timestamp()
+#
+#     queue_user_dict = {
+#         'collection_name': queue_user_collection,
+#         'filters': {
+#             'is_deleted': False,
+#             'queue_id': {'$in': queue_ids},
+#             'created_at': date_filter
+#         } if date_filter else {
+#             'is_deleted': False,
+#             'queue_id': {'$in': queue_ids}
+#         },
+#         'schema': ['_id', 'created_at', 'status']
+#     }
+#     queue_user_list = prepare_item_list(queue_user_dict).get('data')
+#
+#     status_dict = dict(queue_user_status_choices)
+#
+#     for user in queue_user_list:
+#         status = user['status']
+#         if status not in data_dict['status_breakdown']:
+#             data_dict['status_breakdown'][status] = {
+#                 'status': {'key': status, 'label': status_dict.get(status, status)},
+#                 'count': 0,
+#                 'customers': []
+#             }
+#
+#         data_dict['status_breakdown'][status]['count'] += 1
+#         data_dict['status_breakdown'][status]['customers'].append(user)
+#
+#     data_dict['total_customers'] = len(queue_user_list)
+#     data_dict['status_breakdown'] = list(data_dict['status_breakdown'].values())
+#
+#     return {'data': data_dict}

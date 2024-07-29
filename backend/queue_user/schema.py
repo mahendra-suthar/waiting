@@ -39,5 +39,6 @@ class QueueUserData(BaseModel):
     turn_time: int
     dequeue_time: int
     status: int
+    created_at: int
     priority: bool
     token_number: int

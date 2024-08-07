@@ -17,6 +17,7 @@ class RegisterQueueUser(BaseModel):
     status: int = QUEUE_USER_REGISTERED
     service_id: Optional[str] = None
     employee_id: Optional[str] = None
+    business_id: Optional[str] = None
 
     class Config:
         from_attributes = True

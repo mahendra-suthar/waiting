@@ -34,6 +34,7 @@ def create_queue_user(queue_user: RegisterQueueUser = Body(...), current_user: s
 
     data_dict.pop('employee_id', None)
     data_dict.pop('service_id', None)
+    data_dict.pop('business_id', None)
 
     print("q_user_obj", queue_id, user_id)
     if queue_id and user_id:

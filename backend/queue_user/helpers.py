@@ -17,6 +17,7 @@ employee_collection = 'employee'
 business_collection = 'business'
 user_collection = 'users'
 category_collection = 'category'
+service_collection = 'service'
 
 
 def jinja_variables_for_queue_user():
@@ -54,27 +55,45 @@ def get_queue_using_service(data_dict):
     service_id = data_dict.get("service_id", None)
     employee_id = data_dict.get("employee_id", None)
     queue_id = data_dict.get("queue_id", None)
+    business_id = data_dict.get("business_id", None)
 
     if not queue_id:
-        if service_id:
-            filter_dict = {'is_deleted': False, "service_id": service_id}
+        if business_id:
+            filter_dict = {'is_deleted': False, "merchant_id": business_id}
             data_dict = {
-                'collection_name': 'employee_service',
+                'collection_name': employee_collection,
                 'filters': filter_dict,
-                'schema': ['employee_id']
+                'schema': ['queue_id']
             }
             data_list = prepare_item_list(data_dict)
             data = data_list.get('data', [])
-            if len(data) > 0:
-                employee_id = data[0].get("employee_id")
+            date_str = get_current_date_str()
+            queue_dict = {}
+            for employee in data:
+                queue_id = employee.get("queue_id")
+                waiting_list = waiting_list_manager.get_waiting_list(queue_id, date_str)
+                queue_dict[queue_id] = len(waiting_list)
+            queue_id = min(queue_dict, key=queue_dict.get)
+        else:
+            if service_id:
+                filter_dict = {'is_deleted': False, "service_id": service_id}
+                data_dict = {
+                    'collection_name': 'employee_service',
+                    'filters': filter_dict,
+                    'schema': ['employee_id']
+                }
+                data_list = prepare_item_list(data_dict)
+                data = data_list.get('data', [])
+                if len(data) > 0:
+                    employee_id = data[0].get("employee_id")
 
-        if employee_id:
-            queue = get_item(
-                collection_name='employee',
-                item_id=employee_id,
-                columns=['_id']
-            )
-            queue_id = queue.get('data', {}).get('_id', None)
+            if employee_id:
+                queue = get_item(
+                    collection_name='employee',
+                    item_id=employee_id,
+                    columns=['_id']
+                )
+                queue_id = queue.get('data', {}).get('_id', None)
 
     return queue_id
 
